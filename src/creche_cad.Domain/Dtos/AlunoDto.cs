@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace creche_cad.Domain.Dtos
+﻿namespace creche_cad.Domain.Dtos
 {
     public class AlunoDto
     {

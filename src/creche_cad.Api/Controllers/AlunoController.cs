@@ -3,7 +3,6 @@ using creche_cad.Domain.Dtos;
 using creche_cad.Domain.Entities;
 using creche_cad.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace creche_cad.Controllers
 {

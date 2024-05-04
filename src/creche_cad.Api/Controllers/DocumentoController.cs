@@ -1,4 +1,5 @@
 ﻿using creche_cad.Data.Context;
+using creche_cad.Domain.Dtos;
 using creche_cad.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
@@ -105,14 +106,20 @@ namespace creche_cad.Controllers
         [HttpGet("aluno/{id}/documentos")]
         public IActionResult ObterDocumentosAluno(Guid id)
         {
-            var documentos = _context.Documentos.Where(d => d.AlunoId == id).Select(d => d.NomeArquivo).ToList();
+            var documentos = _context.Documentos
+                .Where(d => d.AlunoId == id)
+                .Select(d => new DocumentoDto { Id = d.Id, NomeArquivo = d.NomeArquivo })
+                .ToList();
             return Ok(documentos);
         }
 
         [HttpGet("professor/{id}/documentos")]
         public IActionResult ObterDocumentosProfessor(Guid id)
         {
-            var documentos = _context.Documentos.Where(d => d.ProfessorId == id).ToList();
+            var documentos = _context.Documentos
+                .Where(d => d.ProfessorId == id)
+                .Select(d => new DocumentoDto { Id = d.Id, NomeArquivo = d.NomeArquivo })
+                .ToList();
             return Ok(documentos);
         }
 
@@ -120,6 +127,8 @@ namespace creche_cad.Controllers
         public IActionResult DownloadDocumentosAluno(Guid id)
         {
             var nomeAluno = _context.Alunos.Where(a => a.Id == id).FirstOrDefault().Nome;
+
+            nomeAluno = StringUtil.FormatNome(nomeAluno);
 
             var documentos = _context.Documentos.Where(d => d.AlunoId == id).ToList();
 
@@ -143,6 +152,38 @@ namespace creche_cad.Controllers
                 }
 
                 return File(memoryStream.ToArray(), "application/zip", $"documentos_{nomeAluno}.zip");
+            }
+        }
+
+        [HttpGet("professor/{id}/download")]
+        public IActionResult DownloadDocumentosProfessor(Guid id)
+        {
+            var nomeProfessor = _context.Professores.Where(a => a.Id == id).FirstOrDefault().Nome;
+
+            nomeProfessor = StringUtil.FormatNome(nomeProfessor);
+
+            var documentos = _context.Documentos.Where(d => d.AlunoId == id).ToList();
+
+            if (documentos.Count == 0)
+            {
+                return NotFound("Nenhum documento encontrado para este aluno");
+            }
+
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                {
+                    foreach (var documento in documentos)
+                    {
+                        var entry = archive.CreateEntry(documento.NomeArquivo);
+                        using (var entryStream = entry.Open())
+                        {
+                            entryStream.Write(documento.DocumentoBytes, 0, documento.DocumentoBytes.Length);
+                        }
+                    }
+                }
+
+                return File(memoryStream.ToArray(), "application/zip", $"documentos_{nomeProfessor}.zip");
             }
         }
 
@@ -174,6 +215,5 @@ namespace creche_cad.Controllers
 
             return File(documento.DocumentoBytes, "application/octet-stream", documento.NomeArquivo);
         }
-
     }
 }

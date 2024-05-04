@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\creche_cad.Data\creche_cad.Data.csproj" />
     <ProjectReference Include="..\creche_cad.Domain\creche_cad.Domain.csproj" />
+    <ProjectReference Include="..\creche_cad.Service\creche_cad.Service.csproj" />
   </ItemGroup>
 
 </Project>

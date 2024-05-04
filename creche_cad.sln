@@ -7,16 +7,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DOMAIN", "DOMAIN", "{CC04A0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DATA", "DATA", "{599F14B9-78A1-43CA-BA21-7C3198534491}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "creche_cad.Data", "src\creche_cad.Data\creche_cad.Data.csproj", "{0F696F45-129E-472A-A943-69BBDB86406C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "creche_cad.Data", "src\creche_cad.Data\creche_cad.Data.csproj", "{0F696F45-129E-472A-A943-69BBDB86406C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3B879F9B-EFFD-418C-9F89-9C49E0176E1C} = {3B879F9B-EFFD-418C-9F89-9C49E0176E1C}
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "API", "API", "{D24F40EB-769E-40C5-9686-A458C7FEEC53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "creche_cad.Domain", "src\creche_cad.Domain\creche_cad.Domain.csproj", "{3B879F9B-EFFD-418C-9F89-9C49E0176E1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "creche_cad.Domain", "src\creche_cad.Domain\creche_cad.Domain.csproj", "{3B879F9B-EFFD-418C-9F89-9C49E0176E1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "creche_cad.Api", "src\creche_cad.Api\creche_cad.Api.csproj", "{A1FB8DEF-1908-4D33-BF9E-80D8D0A6B99B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "creche_cad.Api", "src\creche_cad.Api\creche_cad.Api.csproj", "{A1FB8DEF-1908-4D33-BF9E-80D8D0A6B99B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SERVICE", "SERVICE", "{49F814D2-54BC-4825-AB44-4B9FD3BBA7B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "creche_cad.Service", "src\creche_cad.Service\creche_cad.Service.csproj", "{B1DB8230-85D0-4C65-A057-1C653260D476}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +40,10 @@ Global
 		{A1FB8DEF-1908-4D33-BF9E-80D8D0A6B99B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1FB8DEF-1908-4D33-BF9E-80D8D0A6B99B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1FB8DEF-1908-4D33-BF9E-80D8D0A6B99B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1DB8230-85D0-4C65-A057-1C653260D476}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1DB8230-85D0-4C65-A057-1C653260D476}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1DB8230-85D0-4C65-A057-1C653260D476}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1DB8230-85D0-4C65-A057-1C653260D476}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,6 +52,7 @@ Global
 		{0F696F45-129E-472A-A943-69BBDB86406C} = {599F14B9-78A1-43CA-BA21-7C3198534491}
 		{3B879F9B-EFFD-418C-9F89-9C49E0176E1C} = {CC04A02B-03D1-4FB9-B4AE-77C9093DB5D0}
 		{A1FB8DEF-1908-4D33-BF9E-80D8D0A6B99B} = {D24F40EB-769E-40C5-9686-A458C7FEEC53}
+		{B1DB8230-85D0-4C65-A057-1C653260D476} = {49F814D2-54BC-4825-AB44-4B9FD3BBA7B5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FC86CB46-27C5-435F-BA80-A2F53269DA1E}
