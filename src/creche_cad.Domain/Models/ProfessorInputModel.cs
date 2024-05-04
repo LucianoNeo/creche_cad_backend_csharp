@@ -19,9 +19,9 @@ namespace creche_cad.Domain.Models
         [Required(ErrorMessage = "Pelo menos um número de telefone é obrigatório")]
         public string TelefonePrincipal { get; set; }
 
-        public string TelefoneCelular { get; set; }
+        public string? TelefoneCelular { get; set; }
 
-        public string TelefoneSecundario { get; set; }
+        public string? TelefoneSecundario { get; set; }
 
         public string Titulo { get; set; }
 
@@ -29,5 +29,6 @@ namespace creche_cad.Domain.Models
 
         [Required(ErrorMessage = "A data de admissão do professor é obrigatória")]
         public DateTime DataAdmissao { get; set; }
+        public DateTime? DataDemissao { get; set; }
     }
 }

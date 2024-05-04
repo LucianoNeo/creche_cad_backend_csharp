@@ -10,7 +10,8 @@ namespace creche_cad.Data.Configuracao
         {
             builder.ToTable(nameof(Documento));
             builder.HasKey(d => d.Id);
-
+            builder.Property(d => d.AlunoId).IsRequired(false);
+            builder.Property(d => d.ProfessorId).IsRequired(false);
             builder.Property(d => d.NomeArquivo).IsRequired();
             builder.Property(d => d.DocumentoBytes).IsRequired();
             builder.Property(d => d.DataCriacao);

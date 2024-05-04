@@ -13,6 +13,21 @@ builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
+// Aplicar migrações pendentes ao iniciar a aplicação
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<CrecheDbContext>();
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Erro ao aplicar migrações: " + ex.Message);
+    }
+}
+
 app.MapControllers();
 
 app.Run();

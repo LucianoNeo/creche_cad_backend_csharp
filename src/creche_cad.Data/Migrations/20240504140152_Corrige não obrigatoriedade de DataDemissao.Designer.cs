@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using creche_cad.Data.Context;
 
@@ -10,9 +11,10 @@ using creche_cad.Data.Context;
 namespace creche_cad.Data.Migrations
 {
     [DbContext(typeof(CrecheDbContext))]
-    partial class CrecheDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240504140152_Corrige não obrigatoriedade de DataDemissao")]
+    partial class CorrigenãoobrigatoriedadedeDataDemissao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.29");
@@ -69,6 +71,7 @@ namespace creche_cad.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("AlunoId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("DataCriacao")
@@ -83,6 +86,7 @@ namespace creche_cad.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<Guid?>("ProfessorId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

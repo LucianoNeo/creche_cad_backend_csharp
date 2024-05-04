@@ -1,7 +1,9 @@
 ﻿using creche_cad.Data.Context;
+using creche_cad.Domain.Dtos;
 using creche_cad.Domain.Entities;
 using creche_cad.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace creche_cad.Controllers
 {
@@ -44,7 +46,20 @@ namespace creche_cad.Controllers
         [HttpGet]
         public IActionResult ObterAlunos()
         {
-            var alunos = _context.Alunos.ToList();
+            var alunos = _context.Alunos
+                                .ToList()
+                                .Select(a => new AlunoDto
+                                {
+                                    Id = a.Id,
+                                    Nome = a.Nome,
+                                    DataNascimento = a.DataNascimento,
+                                    NomePai = a.NomePai,
+                                    NomeMae = a.NomeMae,
+                                    Endereco = a.Endereco,
+                                    Telefone = a.Telefone,
+                                    TurmaId = a.TurmaId
+                                });
+
             return Ok(alunos);
         }
 
@@ -54,9 +69,23 @@ namespace creche_cad.Controllers
             var aluno = _context.Alunos.Find(id);
 
             if (aluno == null)
+            {
                 return NotFound("Aluno não encontrado");
+            }
 
-            return Ok(aluno);
+            var alunoOutput = new AlunoDto
+            {
+                Id = aluno.Id,
+                Nome = aluno.Nome,
+                DataNascimento = aluno.DataNascimento,
+                NomePai = aluno.NomePai,
+                NomeMae = aluno.NomeMae,
+                Endereco = aluno.Endereco,
+                Telefone = aluno.Telefone,
+                TurmaId = aluno.TurmaId
+            };
+
+            return Ok(alunoOutput);
         }
 
         [HttpPut("{id}")]

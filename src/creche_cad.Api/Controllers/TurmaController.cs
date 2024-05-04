@@ -56,13 +56,13 @@ namespace creche_cad.Controllers
             if (turma == null)
                 return NotFound("Turma não encontrada");
 
-            var turmaResposta = new TurmaDto
+            var turmaOutput = new TurmaDto
             {
                 Id = turma.Id,
                 Metragem = turma.Metragem,
                 Nome = turma.Nome
             };
-            return Ok(turmaResposta);
+            return Ok(turmaOutput);
         }
 
         [HttpPut("{id}")]

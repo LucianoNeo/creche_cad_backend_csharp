@@ -13,7 +13,7 @@
         public string? Titulo { get; set; }
         public string? CarteiraTrabalho { get; set; }
         public DateTime DataAdmissao { get; set; }
-        public DateTime DataDemissao { get; set; }
+        public DateTime? DataDemissao { get; set; }
         public DateTime DataCriacao { get; set; }
         public DateTime? DataAtualizacao { get; set; }
         public virtual ICollection<Documento>? Documentos { get; set; }

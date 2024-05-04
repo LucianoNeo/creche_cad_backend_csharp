@@ -21,7 +21,7 @@ namespace creche_cad.Data.Configuracao
             builder.Property(p => p.Titulo);
             builder.Property(p => p.CarteiraTrabalho);
             builder.Property(p => p.DataAdmissao).IsRequired();
-            builder.Property(p => p.DataDemissao).IsRequired();
+            builder.Property(p => p.DataDemissao);
             builder.Property(p => p.DataCriacao);
             builder.Property(p => p.DataAtualizacao);
 

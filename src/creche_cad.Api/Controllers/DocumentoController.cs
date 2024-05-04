@@ -7,19 +7,19 @@ namespace creche_cad.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DocumentosController : ControllerBase
+    public class DocumentoController : ControllerBase
     {
         private readonly CrecheDbContext _context;
 
-        public DocumentosController(CrecheDbContext context)
+        public DocumentoController(CrecheDbContext context)
         {
             _context = context;
         }
 
         [HttpPost("aluno/{id}/upload")]
-        public IActionResult UploadDocumentosAluno(Guid id)
+        public IActionResult UploadDocumentosAluno(Guid id, List<IFormFile> files)
         {
-            var documentos = Request.Form.Files;
+            var documentos = files;
 
             if (documentos == null || documentos.Count == 0)
             {
@@ -60,9 +60,9 @@ namespace creche_cad.Controllers
         }
 
         [HttpPost("professor/{id}/upload")]
-        public IActionResult UploadDocumentosProfessor(Guid id)
+        public IActionResult UploadDocumentosProfessor(Guid id, List<IFormFile> files)
         {
-            var documentos = Request.Form.Files;
+            var documentos = files;
 
             if (documentos == null || documentos.Count == 0)
             {
