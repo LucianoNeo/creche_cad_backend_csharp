@@ -8,6 +8,7 @@
         public string NomeArquivo { get; set; }
         public byte[] DocumentoBytes { get; set; }
         public virtual Aluno Aluno { get; set; }
+        public DateTime DataCriacao { get; set; }
         public virtual Professor Professor { get; set; }
     }
 }

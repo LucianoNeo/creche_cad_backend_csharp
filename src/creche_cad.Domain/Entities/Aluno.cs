@@ -10,7 +10,9 @@
         public string NomeMae { get; set; }
         public string Endereco { get; set; }
         public string Telefone { get; set; }
+        public DateTime DataCriacao { get; set; }
+        public DateTime? DataAtualizacao { get; set; }
         public virtual Turma Turma { get; set; }
-        public virtual ICollection<Documento> Documentos { get; set; }
+        public virtual ICollection<Documento>? Documentos { get; set; }
     }
 }
