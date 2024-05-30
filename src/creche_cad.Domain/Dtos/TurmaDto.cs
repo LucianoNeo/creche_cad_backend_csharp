@@ -4,6 +4,6 @@
     {
         public Guid Id { get; set; }
         public string Nome { get; set; }
-        public decimal? Metragem { get; set; }
+        public string? Metragem { get; set; }
     }
 }

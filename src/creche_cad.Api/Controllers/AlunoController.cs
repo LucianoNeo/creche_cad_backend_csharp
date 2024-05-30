@@ -3,6 +3,7 @@ using creche_cad.Domain.Dtos;
 using creche_cad.Domain.Entities;
 using creche_cad.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace creche_cad.Controllers
 {
@@ -45,22 +46,28 @@ namespace creche_cad.Controllers
         [HttpGet]
         public IActionResult ObterAlunos()
         {
-            var alunos = _context.Alunos
-                                .ToList()
-                                .Select(a => new AlunoDto
-                                {
-                                    Id = a.Id,
-                                    Nome = a.Nome,
-                                    DataNascimento = a.DataNascimento,
-                                    NomePai = a.NomePai,
-                                    NomeMae = a.NomeMae,
-                                    Endereco = a.Endereco,
-                                    Telefone = a.Telefone,
-                                    TurmaId = a.TurmaId
-                                });
+            var alunosComTurmaNome = _context.Alunos
+                .Select(a => new
+                {
+                    Aluno = a,
+                })
+                .ToList()
+                .Select(a => new AlunoDto
+                {
+                    Id = a.Aluno.Id,
+                    Nome = a.Aluno.Nome,
+                    DataNascimento = a.Aluno.DataNascimento,
+                    NomePai = a.Aluno.NomePai,
+                    NomeMae = a.Aluno.NomeMae,
+                    Endereco = a.Aluno.Endereco,
+                    Telefone = a.Aluno.Telefone,
+                    TurmaId = a.Aluno.TurmaId,
+                    TurmaNome = _context.Turmas.Where(t => t.Id == a.Aluno.TurmaId).First().Nome,
+                });
 
-            return Ok(alunos);
+            return Ok(alunosComTurmaNome);
         }
+
 
         [HttpGet("{id}")]
         public IActionResult ObterAluno(Guid id)
@@ -71,6 +78,10 @@ namespace creche_cad.Controllers
             {
                 return NotFound("Aluno não encontrado");
             }
+            
+            // Busca o nome da turma associada ao aluno
+            var turma = _context.Turmas.FirstOrDefault(t => t.Id == aluno.TurmaId);
+            var turmaNome = turma != null ? turma.Nome : string.Empty;
 
             var alunoOutput = new AlunoDto
             {
@@ -81,7 +92,8 @@ namespace creche_cad.Controllers
                 NomeMae = aluno.NomeMae,
                 Endereco = aluno.Endereco,
                 Telefone = aluno.Telefone,
-                TurmaId = aluno.TurmaId
+                TurmaId = aluno.TurmaId,
+                TurmaNome = turmaNome
             };
 
             return Ok(alunoOutput);
@@ -103,6 +115,7 @@ namespace creche_cad.Controllers
             alunoExistente.NomeMae = input.NomeMae;
             alunoExistente.Endereco = input.Endereco;
             alunoExistente.Telefone = input.Telefone;
+            alunoExistente.TurmaId = input.TurmaId;
 
             _context.SaveChanges();
 

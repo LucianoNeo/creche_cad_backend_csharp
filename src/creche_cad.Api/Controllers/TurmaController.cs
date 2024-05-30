@@ -26,6 +26,7 @@ namespace creche_cad.Controllers
             var turma = new Turma
             {
                 Nome = input.Nome,
+                Metragem = input.Metragem,
                 DataCriacao = DateTime.Now
             };
 

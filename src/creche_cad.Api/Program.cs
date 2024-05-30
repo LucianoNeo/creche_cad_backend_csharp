@@ -11,9 +11,19 @@ builder.Services.AddDbContext<CrecheDbContext>(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost3000",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:3000")
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
 
-// Aplicar migrações pendentes ao iniciar a aplicação
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -27,6 +37,8 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Erro ao aplicar migrações: " + ex.Message);
     }
 }
+
+app.UseCors("AllowLocalhost3000");
 
 app.MapControllers();
 

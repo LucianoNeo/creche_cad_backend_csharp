@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using creche_cad.Data.Context;
 
@@ -10,9 +11,10 @@ using creche_cad.Data.Context;
 namespace creche_cad.Data.Migrations
 {
     [DbContext(typeof(CrecheDbContext))]
-    partial class CrecheDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240504205537_Altera metragem para string")]
+    partial class Alterametragemparastring
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.29");

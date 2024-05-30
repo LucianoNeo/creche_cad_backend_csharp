@@ -162,11 +162,11 @@ namespace creche_cad.Controllers
 
             nomeProfessor = StringUtil.FormatNome(nomeProfessor);
 
-            var documentos = _context.Documentos.Where(d => d.AlunoId == id).ToList();
+            var documentos = _context.Documentos.Where(d => d.ProfessorId == id).ToList();
 
             if (documentos.Count == 0)
             {
-                return NotFound("Nenhum documento encontrado para este aluno");
+                return NotFound("Nenhum documento encontrado para este professor");
             }
 
             using (var memoryStream = new MemoryStream())
