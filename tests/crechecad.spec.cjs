@@ -96,6 +96,8 @@ test('Vue 3 UI supports login, navigation, edits, documents and real screenshots
   await page.getByRole('link', { name: 'Auditoria', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Auditoria', exact: true })).toBeVisible(); await capture('audit');
   await page.getByRole('link', { name: 'Professores', exact: true }).click();
+  await expect(page).toHaveURL(/\/Professores/);
+  await expect(page.getByText('Ana Ferreira', { exact: true })).toBeVisible();
   await page.reload(); await expect(page.getByText('Ana Ferreira', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/welcome'); await expect(page.getByRole('heading', { name: 'Bom ter tudo em dia.' })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
