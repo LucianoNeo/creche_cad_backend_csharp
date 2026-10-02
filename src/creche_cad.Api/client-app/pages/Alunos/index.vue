@@ -562,11 +562,8 @@ export default {
 
         { text: "Data de Nascimento", value: "dataNascimento", sortable: true },
 
-        { text: "Nome do Pai", value: "nomePai", sortable: true },
 
-        { text: "Nome da Mãe", value: "nomeMae", sortable: true },
 
-        { text: "Endereço", value: "endereco", sortable: true },
 
         { text: "Telefone", value: "telefone", sortable: true },
 

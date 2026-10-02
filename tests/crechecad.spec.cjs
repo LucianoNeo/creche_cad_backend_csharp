@@ -76,7 +76,7 @@ test('original Vue UI supports login, navigation, edits, documents and real scre
   const row = page.getByRole('row').filter({ hasText: 'Alice Martins' });
   await row.locator('[title="Editar"]').click();
   const dialog = page.getByRole('dialog'); await dialog.getByLabel('Nome', { exact: true }).fill('Alice Martins');
-  await dialog.getByRole('button', { name: 'Salvar', exact: true }).click(); await expect(dialog).not.toBeVisible();
+  await dialog.getByRole('button', { name: 'Salvar', exact: true }).click(); await expect(page.getByText('Editar Aluno', { exact: true })).not.toBeVisible();
   await row.locator('[title="Abrir Documentos"]').click();
   await expect(page.getByText('declaracao-demo.txt', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'captures/documents.png', fullPage: true });

@@ -1,3 +1,4 @@
+import pt from 'vuetify/es5/locale/pt';
 export default {
   ssr: false, target: 'static',
   head: { title: 'CrecheCad · Gestão escolar', htmlAttrs: { lang: 'pt-BR' },
@@ -6,7 +7,7 @@ export default {
   css: ['~/assets/app.css'], components: true, plugins: ['~/plugins/api.js'],
   router: { middleware: ['auth'] },
   buildModules: ['@nuxtjs/vuetify'],
-  vuetify: { defaultAssets: false, treeShake: true, theme: { dark: false, themes: { light: {
+  vuetify: { defaultAssets: false, treeShake: true, lang: { locales: { pt }, current: 'pt' }, theme: { dark: false, themes: { light: {
     primary: '#17655c', secondary: '#eab363', accent: '#17655c', error: '#bd4242', success: '#17655c'
   } } } },
   generate: { crawler: false, routes: [], fallback: '200.html' },
