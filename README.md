@@ -1,6 +1,35 @@
 # CrecheCad
 
+[![Verificação](https://github.com/LucianoNeo/creche_cad_backend_csharp/actions/workflows/crechecad-ci.yml/badge.svg)](https://github.com/LucianoNeo/creche_cad_backend_csharp/actions/workflows/crechecad-ci.yml)
+
 Cadastro de alunos, turmas, professores e documentos, com API em C# e interface em Vue/Nuxt. O projeto começou em 2024; esta revisão organiza a execução com Docker, substitui o login feito no navegador por autenticação no servidor e corrige problemas nos cadastros e no backup.
+
+## A aplicação em funcionamento / Screenshots
+
+Capturas reais feitas pelo Playwright no GitHub Actions, com um banco novo e dados fictícios. A mesma execução verifica os fluxos da API e da interface.
+
+### Visão geral / Overview
+
+![Visão geral com os totais e as turmas da demonstração](docs/images/overview.png)
+
+### Alunos / Students
+
+![Consulta e edição de alunos](docs/images/students.png)
+
+### Documentos / Documents
+
+![Documentos vinculados ao cadastro de um aluno](docs/images/documents.png)
+
+<details>
+<summary>Turmas, professores e versão para celular / Classes, teachers and mobile</summary>
+
+![Cadastro de turmas](docs/images/classes.png)
+
+![Cadastro de professores](docs/images/teachers.png)
+
+<img src="docs/images/mobile.png" alt="Visão geral no celular" width="390" />
+
+</details>
 
 ## Experimentar
 
@@ -39,6 +68,8 @@ Para parar, execute `docker compose down`. Os cadastros e as chaves de sessão f
 | Verificação | Playwright contra a aplicação completa no GitHub Actions |
 
 O SQLite mantém a instalação simples para uma secretaria e permite levar o projeto para outro ambiente sem configurar um servidor de banco. Documentos pequenos ficam no banco para serem incluídos no mesmo backup. A listagem de alunos projeta os dados e o nome da turma em uma única consulta; o backup usa a API de snapshot do SQLite, sem copiar o arquivo enquanto ele pode estar sendo alterado.
+
+Veja as [rotas, o fluxo de sessão e as correções](docs/architecture.md) para uma leitura do código.
 
 `src/creche_cad.Api` é o ponto de entrada utilizado pelo Docker. A API duplicada da raiz foi removida para manter um único ponto de entrada.
 
