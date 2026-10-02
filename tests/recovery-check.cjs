@@ -1,7 +1,10 @@
-const {request}=require('@playwright/test');
+const {request,expect}=require('@playwright/test');
 (async()=>{
  const client=await request.newContext({baseURL:'http://127.0.0.1:8082'});
- const token=(await(await client.get('/api/auth/csrf')).json()).token;
+ let csrf;
+ // The proxy re-resolves Docker DNS after the API container is recreated.
+ await expect.poll(async()=>{csrf=await client.get('/api/auth/csrf');return csrf.status();},{timeout:30000}).toBe(200);
+ const token=(await csrf.json()).token;
  const login=await client.post('/api/auth/login',{headers:{'X-CSRF-TOKEN':token},data:{username:'secretaria',password:'CrecheCad-Demo-2026!'}});
  if(login.status()!==200)throw new Error('Administrator rescue did not restore login');
  const data=await(await client.get('/api/dashboard')).json();
