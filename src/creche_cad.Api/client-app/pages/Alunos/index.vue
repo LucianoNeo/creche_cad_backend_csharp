@@ -354,7 +354,7 @@
 
             v-model="newDocumentFiles"
 
-            label="Adicionar documentos (PDF, PNG, JPG ou TXT · até 5 MB)"
+            label="Adicionar documentos"
 
             prepend-icon="mdi-paperclip"
 
