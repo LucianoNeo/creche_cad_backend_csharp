@@ -9,3 +9,4 @@ h1,h2,p{margin:0}h1{font-size:36px;line-height:1.18;letter-spacing:-1.3px;font-w
 @media(max-width:700px){.content-shell{padding:26px 16px}.page-header{align-items:flex-start;gap:16px}.date-pill{display:none}h1{font-size:29px}.stats-grid{gap:10px}.stat-card{padding:16px 12px}.stat-label{font-size:10px;min-height:35px}.stat-label .v-icon{display:none}.stat-card strong{font-size:34px}.panel{padding:22px!important}.toolbar-label{display:none}.login-shell{padding:24px}.login-grid{grid-template-columns:1fr;gap:24px}.login-intro h1{font-size:36px;margin:12px 0}.login-intro p,.intro-decoration{display:none}.login-card{padding:24px!important}.brand{padding-bottom:30px}.class-count{white-space:nowrap}}
 
 .v-data-table td:last-child{white-space:nowrap}.v-data-table td:first-child{min-width:160px}.v-data-table td .v-icon{vertical-align:middle}
+@media(max-width:700px){.stat-label .v-icon{display:none!important}}
