@@ -84,7 +84,7 @@ test('Vue 3 UI supports login, navigation, edits, documents and real screenshots
   await row.locator('[title="Abrir Documentos"]').click();
   await expect(page.getByText('declaracao-demo.txt', { exact: true })).toBeVisible();
   await capture('documents');
-  await page.getByRole('button', { name: 'Fechar', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Fechar', exact: true }).click();
   await page.getByRole('link', { name: 'Turmas', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Turmas', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: 'Maternal · Girassol', exact: true })).toBeVisible();
