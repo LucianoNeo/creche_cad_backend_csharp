@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.AspNetCore.Identity;
+using creche_cad.Domain.Entities;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,14 +18,19 @@ Directory.CreateDirectory(dataDirectory);
 builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(dataDirectory, "keys")));
 builder.Services.AddDbContext<CrecheDbContext>(options => options
     .UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? $"Data Source={Path.Combine(dataDirectory, "crechecad.db")}")
-    // EF 6 generated the existing snapshots. No schema change is introduced by this upgrade.
-    .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)));
-builder.Services.AddSingleton<AdminCredentials>();
+);
+builder.Services.AddScoped<PasswordHasher<SchoolUser>>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => {
     options.Cookie.Name = "crechecad.session";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.Cookie.SecurePolicy = builder.Configuration.GetValue<bool>("Demo:Enabled") ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+    options.Events.OnValidatePrincipal=async ctx=>{
+        var db=ctx.HttpContext.RequestServices.GetRequiredService<CrecheDbContext>();
+        var id=ctx.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user=Guid.TryParse(id,out var uid)?await db.Users.AsNoTracking().SingleOrDefaultAsync(u=>u.Id==uid):null;
+        if(user is null||!user.Active||user.SecurityStamp!=ctx.Principal?.FindFirstValue("stamp")) ctx.RejectPrincipal();
+    };
     options.ExpireTimeSpan = TimeSpan.FromHours(2);
     options.SlidingExpiration = false;
     options.Events.OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; };
@@ -33,6 +40,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 builder.Services.AddControllersWithViews(options => {
     options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
+    options.Filters.Add(new StaffWriteFilter());
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
 });
 builder.Services.AddProblemDetails();
@@ -40,13 +48,20 @@ builder.Services.AddRateLimiter(options => {
     options.RejectionStatusCode = 429;
     options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 8, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 var app = builder.Build();
-app.Services.GetRequiredService<AdminCredentials>();
+
 using (var scope = app.Services.CreateScope()) {
     var context = scope.ServiceProvider.GetRequiredService<CrecheDbContext>();
     await context.Database.MigrateAsync();
+    if(!await context.Users.AnyAsync()) {
+        var user=new SchoolUser { Username=(builder.Configuration["Admin:Username"]??throw new InvalidOperationException("Configure Admin__Username.")).ToLowerInvariant(),Role="Administrator" };
+        var password=builder.Configuration["Admin:Password"]??throw new InvalidOperationException("Configure Admin__Password.");
+        if(password.Length<12)throw new InvalidOperationException("Use a password of at least 12 characters.");
+        user.PasswordHash=scope.ServiceProvider.GetRequiredService<PasswordHasher<SchoolUser>>().HashPassword(user,password);
+        context.Users.Add(user); await context.SaveChangesAsync();
+    }
     if (builder.Configuration.GetValue<bool>("Demo:Enabled")) await DemoData.SeedAsync(context);
 }
 app.UseExceptionHandler();
@@ -59,6 +74,10 @@ app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.Use(async (ctx,next)=>{
+    ctx.RequestServices.GetRequiredService<CrecheDbContext>().AuditActor=ctx.User.Identity?.Name??"anonymous";
+    await next();
+});
 app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 app.MapControllers();
 app.Run();

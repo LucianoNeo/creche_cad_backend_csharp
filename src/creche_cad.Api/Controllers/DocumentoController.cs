@@ -78,6 +78,6 @@ public class DocumentoController(CrecheDbContext db) : ControllerBase {
     public Task<IActionResult> DeleteProfessor(Guid id, CancellationToken ct) => DeleteAll(id, false, ct);
     private async Task<IActionResult> DeleteAll(Guid id, bool aluno, CancellationToken ct) {
         if (!await Exists(id, aluno, ct)) return NotFound();
-        await Documents(id, aluno).ExecuteDeleteAsync(ct); return NoContent();
+        db.Documentos.RemoveRange(await Documents(id, aluno).ToListAsync(ct)); await db.SaveChangesAsync(ct); return NoContent();
     }
 }

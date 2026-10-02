@@ -17,6 +17,18 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Generate upgraded schema when bootstrapping this revision
+        run: |
+          if ! find src/creche_cad.Data/Migrations -name '*CompleteSchoolAccess.cs' | grep -q .; then
+            dotnet tool install dotnet-ef --tool-path /tmp/ef --version 10.0.0
+            /tmp/ef/dotnet-ef migrations add CompleteSchoolAccess --project src/creche_cad.Data --startup-project src/creche_cad.Api
+          fi
+          mkdir -p schema
+          cp src/creche_cad.Data/Migrations/*CompleteSchoolAccess*.cs schema/
+          cp src/creche_cad.Data/Migrations/*Snapshot.cs schema/
       - name: Prepare fictitious demo
         run: cp .env.example .env
       - name: Build and start the full application
@@ -35,6 +47,7 @@ jobs:
         with:
           name: crechecad-verification
           path: |
+            schema/
             captures/
             playwright-report/
             test-results/

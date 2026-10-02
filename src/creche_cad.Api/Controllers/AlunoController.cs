@@ -13,7 +13,12 @@ public class AlunoController(CrecheDbContext db) : ControllerBase {
         Endereco = a.Endereco, Telefone = a.Telefone, TurmaId = a.TurmaId, TurmaNome = a.Turma.Nome
     };
     [HttpGet]
-    public async Task<IActionResult> ObterAlunos(CancellationToken ct) => Ok(await db.Alunos.AsNoTracking().OrderBy(a => a.Nome).Select(Projection).ToListAsync(ct));
+    public async Task<IActionResult> ObterAlunos(CancellationToken ct,int page=1,int pageSize=10,string? q=null) {
+        var query=db.Alunos.AsNoTracking().OrderBy(a => a.Nome).Select(Projection);
+        if(!string.IsNullOrWhiteSpace(q))query=query.Where(x=>x.Nome.Contains(q));
+        var size=Math.Clamp(pageSize,1,100); var current=Math.Max(1,page);
+        return Ok(new {items=await query.Skip((current-1)*size).Take(size).ToListAsync(ct),total=await query.CountAsync(ct),page=current,pageSize=size});
+    }
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> ObterAluno(Guid id, CancellationToken ct) {
         var aluno = await db.Alunos.AsNoTracking().Where(a => a.Id == id).Select(Projection).SingleOrDefaultAsync(ct);

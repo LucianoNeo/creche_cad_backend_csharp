@@ -9,7 +9,12 @@ namespace creche_cad.Controllers;
 public class TurmaController(CrecheDbContext db) : ControllerBase {
     private IQueryable<TurmaDto> Query() => db.Turmas.AsNoTracking().OrderBy(t => t.Nome).Select(t => new TurmaDto { Id = t.Id, Nome = t.Nome, Metragem = t.Metragem });
     [HttpGet]
-    public async Task<IActionResult> ObterTurmas(CancellationToken ct) => Ok(await Query().ToListAsync(ct));
+    public async Task<IActionResult> ObterTurmas(CancellationToken ct,int page=1,int pageSize=10,string? q=null) {
+        var query=Query();
+        if(!string.IsNullOrWhiteSpace(q))query=query.Where(x=>x.Nome.Contains(q));
+        var size=Math.Clamp(pageSize,1,100); var current=Math.Max(1,page);
+        return Ok(new {items=await query.Skip((current-1)*size).Take(size).ToListAsync(ct),total=await query.CountAsync(ct),page=current,pageSize=size});
+    }
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> ObterTurma(Guid id, CancellationToken ct) {
         var turma = await Query().SingleOrDefaultAsync(t => t.Id == id, ct); return turma is null ? NotFound() : Ok(turma);

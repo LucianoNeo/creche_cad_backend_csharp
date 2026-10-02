@@ -10,7 +10,7 @@ services:
       - school-data:/data
     restart: unless-stopped
   web:
-    build: src/creche_cad.Api/client-app
+    build: frontend
     ports:
       - "127.0.0.1:${PORT:-8082}:8080"
     depends_on:

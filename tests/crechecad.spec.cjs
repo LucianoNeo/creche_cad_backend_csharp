@@ -38,7 +38,7 @@ test('student CRUD validates dates and class references, protects occupied class
 });
 test('document upload rejects invalid owners, formats and oversized files', async ({ request }) => {
   const token = await login(request); const headers = { 'X-CSRF-TOKEN': token };
-  const alunos = await (await request.get('/api/aluno')).json(); const id = alunos[0].id;
+  const alunos = await (await request.get('/api/aluno?q=Alice')).json(); const id = alunos.items[0].id;
   const upload = (owner, name, buffer) => request.post(`/api/documento/aluno/${owner}/upload`, { headers, multipart: { files: { name, mimeType: 'application/octet-stream', buffer } } });
   expect((await upload(crypto.randomUUID(), 'notas.txt', Buffer.from('dados fictícios'))).status()).toBe(404);
   expect((await upload(id, 'malware.exe', Buffer.from('executable'))).status()).toBe(400);
@@ -61,7 +61,7 @@ test('backup is a valid SQLite snapshot and does not expose server paths', async
   const response = await request.get('/api/database/backup'); expect(response.status()).toBe(200);
   const bytes = await response.body(); expect(bytes.subarray(0,16).toString()).toBe('SQLite format 3\0');
 });
-test('original Vue UI supports login, navigation, edits, documents and real screenshots', async ({ page }) => {
+test('Vue 3 UI supports login, navigation, edits, documents and real screenshots', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/'); await page.getByLabel('Usuário', { exact: true }).fill(username); await page.getByLabel('Senha', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -91,9 +91,52 @@ test('original Vue UI supports login, navigation, edits, documents and real scre
   await capture('classes');
   await page.getByRole('link', { name: 'Professores', exact: true }).click(); await expect(page.getByText('Ana Ferreira', { exact: true })).toBeVisible();
   await capture('teachers');
+  await page.getByRole('link', { name: 'Usuários', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Usuários', exact: true })).toBeVisible(); await capture('users');
+  await page.getByRole('link', { name: 'Auditoria', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Auditoria', exact: true })).toBeVisible(); await capture('audit');
+  await page.getByRole('link', { name: 'Professores', exact: true }).click();
   await page.reload(); await expect(page.getByText('Ana Ferreira', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 }); await page.goto('/welcome'); await expect(page.getByRole('heading', { name: 'Bom ter tudo em dia.' })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await capture('mobile');
   expect(errors).toEqual([]);
+});
+test('staff permissions, recovery and revocation protect access', async ({request, playwright, baseURL}) => {
+  const headers={'X-CSRF-TOKEN':await login(request)};
+  const created=await request.post('/api/users',{headers,data:{username:'consulta.demo',password:'Initial-Demo-2026!',role:'Viewer'}});
+  expect(created.status()).toBe(201); const user=await created.json();
+  const staff=await playwright.request.newContext({baseURL});
+  const signIn=async password=>{
+    const token=(await(await staff.get('/api/auth/csrf')).json()).token;
+    expect((await staff.post('/api/auth/login',{headers:{'X-CSRF-TOKEN':token},data:{username:user.username,password}})).status()).toBe(200);
+    return (await(await staff.get('/api/auth/csrf')).json()).token;
+  };
+  let token=await signIn('Initial-Demo-2026!');
+  expect((await staff.get('/api/aluno')).status()).toBe(200);
+  expect((await staff.get('/api/users')).status()).toBe(403);
+  expect((await staff.get('/api/database/backup')).status()).toBe(403);
+  expect((await staff.post('/api/turma',{headers:{'X-CSRF-TOKEN':token},data:{nome:'Forbidden'}})).status()).toBe(403);
+  expect((await staff.post('/api/auth/change-password',{headers:{'X-CSRF-TOKEN':token},data:{currentPassword:'Initial-Demo-2026!',newPassword:'Changed-Demo-2026!'}})).status()).toBe(204);
+  expect((await staff.get('/api/auth/me')).status()).toBe(401); token=await signIn('Changed-Demo-2026!');
+  expect((await staff.post('/api/auth/recovery',{headers:{'X-CSRF-TOKEN':token},data:{username:user.username}})).status()).toBe(202);
+  expect((await(await request.get('/api/users/recoveries')).json()).some(r=>r.username===user.username)).toBe(true);
+  expect((await request.post(`/api/users/${user.id}/reset-password`,{headers,data:{password:'Recovered-Demo-2026!'}})).status()).toBe(204);
+  expect((await staff.get('/api/auth/me')).status()).toBe(401); await signIn('Recovered-Demo-2026!');
+  expect((await(await request.get('/api/users/recoveries')).json()).some(r=>r.username===user.username)).toBe(false);
+  expect((await request.put(`/api/users/${user.id}`,{headers,data:{role:'Secretary',active:true}})).status()).toBe(204);
+  expect((await staff.get('/api/auth/me')).status()).toBe(401);token=await signIn('Recovered-Demo-2026!');
+  const turma=await(await staff.post('/api/turma',{headers:{'X-CSRF-TOKEN':token},data:{nome:'Staff test'}})).json();expect(turma.id).toBeTruthy();
+  expect((await staff.delete(`/api/turma/${turma.id}`,{headers:{'X-CSRF-TOKEN':token}})).status()).toBe(200);
+  expect((await request.put(`/api/users/${user.id}`,{headers,data:{role:'Secretary',active:false}})).status()).toBe(204);
+  expect((await staff.get('/api/auth/me')).status()).toBe(401);
+  const audit=await(await request.get('/api/users/audit')).json();expect(audit.total).toBeGreaterThan(25);expect(audit.items).toHaveLength(25);
+  expect(JSON.stringify(audit)).not.toContain('PasswordHash'); await staff.dispose();
+});
+test('server pagination and search keep results consistent',async({request})=>{
+  await login(request);
+  const first=await(await request.get('/api/aluno?pageSize=5')).json();const second=await(await request.get('/api/aluno?page=2&pageSize=5')).json();
+  expect(first.total).toBe(12);expect(first.items).toHaveLength(5);expect(second.items).toHaveLength(5);
+  expect(first.items.map(a=>a.id)).not.toContain(second.items[0].id);
+  const result=await(await request.get('/api/aluno?q=Alice')).json();expect(result.total).toBe(1);expect(result.items[0].nome).toBe('Alice Martins');
 });
