@@ -1,123 +1,40 @@
 <template>
   <v-app>
-    <v-navigation-drawer
-      v-model="drawer"
-      :mini-variant="miniVariant"
-      :clipped="clipped"
-      fixed
-      app
-    >
-      <v-list>
-        <v-list-item
-          v-for="(item, i) in items"
-          :key="i"
-          v-if="isLoggedIn || item.title === 'Login'"
-          :to="item.to"
-          router
-          exact
-        >
-          <v-list-item-action>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item-content>
+    <v-navigation-drawer v-if="isLoggedIn" v-model="drawer" app width="248" class="sidebar">
+      <div class="brand"><div class="brand-symbol">c.</div><div>CrecheCad<small>Gestão escolar</small></div></div>
+      <div class="nav-caption">SECRETARIA</div>
+      <v-list nav>
+        <v-list-item v-for="item in items" :key="item.to" :to="item.to" exact color="primary">
+          <v-list-item-icon><v-icon>{{ item.icon }}</v-icon></v-list-item-icon>
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
+      <template #append><div class="sidebar-note">Cadastros e documentos<br><strong>em um só lugar.</strong></div></template>
     </v-navigation-drawer>
-    <v-app-bar :clipped-left="clipped" fixed app>
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
-      <v-btn icon @click.stop="miniVariant = !miniVariant">
-        <v-icon>mdi-{{ `chevron-${miniVariant ? "right" : "left"}` }}</v-icon>
-      </v-btn>
-      <v-toolbar-title>
-        <v-icon size="36">mdi-book-account</v-icon>
-        {{ title }}
-      </v-toolbar-title>
+    <v-app-bar v-if="isLoggedIn" app flat color="white" height="76">
+      <v-app-bar-nav-icon class="d-lg-none" @click="drawer = !drawer" aria-label="Abrir menu" />
+      <span class="toolbar-label">Organização para o dia a dia</span><v-spacer />
+      <span class="account"><span class="account-dot" />{{ $store.state.auth.user }}</span>
+      <v-btn text small class="ml-4" to="/logout">Sair</v-btn>
     </v-app-bar>
-    <v-main>
-      <v-container v-if="isLoggedIn">
-        <Nuxt />
-      </v-container>
-      <v-container v-else>
-        <v-container>
-          <router-view></router-view>
-        </v-container>
-      </v-container>
-    </v-main>
-    <v-footer :absolute="!fixed" app>
-      <v-row no-gutters>
-        <v-col cols="12" class="d-flex justify-space-between">
-          <span
-            >Desenvolvido por LucianoNeo &copy;
-            {{ new Date().getFullYear() }}</span
-          >
-          <small class="ml-6">
-            <em>
-              Licenciado para Centro Vicentino Educação Infantil São Vicente de
-              Paulo</em
-            >
-          </small>
-        </v-col>
-      </v-row>
-    </v-footer>
+    <v-main><div :class="isLoggedIn ? 'content-shell' : 'login-shell'"><Nuxt /></div></v-main>
+    <v-snackbar :value="!!$store.state.error" color="error" timeout="8000" @input="!$event && $store.commit('SET_ERROR', null)">
+      {{ $store.state.error }}<template #action><v-btn text @click="$store.commit('SET_ERROR', null)">Fechar</v-btn></template>
+    </v-snackbar>
   </v-app>
 </template>
-
 <script>
 export default {
-  name: "DefaultLayout",
-  data() {
-    return {
-      clipped: true,
-      drawer: true,
-      fixed: true,
-
-      miniVariant: false,
-      right: true,
-      rightDrawer: false,
-      title: "CrecheCad",
-    };
-  },
+  data: () => ({ drawer: null }),
   computed: {
-    isLoggedIn() {
-      return this.$store.state.auth.isAuthenticated;
-    },
-    items() {
-      const result = [
-        {
-          icon: "mdi-home",
-          title: "Home",
-          to: "/welcome",
-        },
-        {
-          icon: "mdi-home-group",
-          title: "Turmas",
-          to: "/Turmas",
-        },
-        {
-          icon: "mdi-account-group",
-          title: "Alunos",
-          to: "/Alunos",
-        },
-        {
-          icon: "mdi-account-school",
-          title: "Professores",
-          to: "/Professores",
-        },
-        {
-          icon: "mdi-database",
-          title: "Backup",
-          to: "/Backup",
-        },
-        {
-          icon: "mdi-account-check",
-          title: this.isLoggedIn ? "Logout" : "Login",
-          to: this.isLoggedIn ? "/logout" : "/",
-        },
-      ];
-      return result;
-    },
-  },
+    isLoggedIn() { return this.$store.state.auth.isAuthenticated; },
+    items() { return [
+      { to: '/welcome', title: 'Visão geral', icon: 'mdi-view-dashboard-outline' },
+      { to: '/Alunos', title: 'Alunos', icon: 'mdi-account-group-outline' },
+      { to: '/Turmas', title: 'Turmas', icon: 'mdi-home-group' },
+      { to: '/Professores', title: 'Professores', icon: 'mdi-school-outline' },
+      { to: '/Backup', title: 'Backup', icon: 'mdi-database-outline' }
+    ]; }
+  }
 };
 </script>

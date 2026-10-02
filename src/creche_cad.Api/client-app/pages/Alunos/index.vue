@@ -1,10 +1,10 @@
 <template>
-  <v-container>
+  <v-container class="records-page"><div class="page-header"><div><div class="eyebrow">SECRETARIA / CADASTROS</div><h1>Alunos</h1><p>Responsáveis, contatos e documentos de cada aluno.</p></div></div>
     <v-row>
       <v-col>
         <v-text-field
           v-model="search"
-          label="Buscar"
+          label="Buscar alunos"
           outlined
           dense
           append-icon="mdi-magnify"
@@ -176,7 +176,7 @@
           </v-list>
           <v-file-input
             v-model="newDocumentFiles"
-            label="Adicionar Documentos"
+            label="Adicionar documentos (PDF, PNG, JPG ou TXT · até 5 MB)"
             prepend-icon="mdi-paperclip"
             multiple
             outlined
@@ -275,7 +275,7 @@ export default {
   computed: {
     ...mapGetters("alunos", ["alunos", "loading"]),
     ...mapGetters("turmas", ["turmas"]),
-    ...mapGetters("documentos", ["documentos", "loading"]),
+    ...mapGetters("documentos", ["documentos"]),
     headers() {
       return [
         { text: "Nome", align: "start", sortable: true, value: "nome" },
@@ -319,14 +319,16 @@ export default {
     ]),
 
     editItem(item) {
-      this.editedAluno = { ...item };
+      this.editedAluno = { ...item, dataNascimento: item.dataNascimento?.slice(0,10) };
       this.dialogEdit = true;
     },
 
     async saveEditedAlunoConfirm() {
+      try {
       await this.updateAluno(this.editedAluno);
       await this.fetchAlunos();
       this.closeEdit();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     deleteItem(item) {
@@ -335,9 +337,11 @@ export default {
     },
 
     async deleteAlunoConfirm() {
+      try {
       await this.deleteAluno(this.itemToDelete);
       await this.fetchAlunos();
       this.closeDelete();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     closeEdit() {
@@ -358,9 +362,11 @@ export default {
     },
 
     async saveNewAlunoConfirm() {
+      try {
       await this.createAluno(this.newAluno);
       this.fetchAlunos();
       this.closeCreate();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     updateTurmaNome() {
@@ -373,7 +379,7 @@ export default {
     formatDate(date) {
       if (!date) return null;
 
-      const formattedDate = new Date(date);
+      const formattedDate = new Date(date.slice(0, 10) + "T12:00:00");
       const day = formattedDate.getDate().toString().padStart(2, "0");
       const month = (formattedDate.getMonth() + 1).toString().padStart(2, "0");
       const year = formattedDate.getFullYear();
@@ -389,10 +395,12 @@ export default {
     },
 
     async openDocuments(item) {
-      this.editedAluno = { ...item };
+      try {
+      this.editedAluno = { ...item, dataNascimento: item.dataNascimento?.slice(0,10) };
       await this.fetchDocumentos(item.id);
       this.alunoDocuments = this.documentos;
       this.dialogDocuments = true;
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     closeDocuments() {
@@ -402,6 +410,7 @@ export default {
     },
 
     async uploadDocumentsHandler() {
+      try {
       if (this.newDocumentFiles.length > 0) {
         await this.uploadDocument({
           alunoId: this.editedAluno.id,
@@ -411,9 +420,11 @@ export default {
         await this.fetchDocumentos(this.editedAluno.id);
         this.alunoDocuments = this.documentos;
       }
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     async downloadAllDocumentsHandler() {
+      try {
       try {
         const success = await this.downloadAllDocuments({
           alunoId: this.editedAluno.id,
@@ -431,15 +442,18 @@ export default {
           error
         );
       }
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     async deleteDocumentHandler(document) {
+      try {
       await this.deleteDocument({
         alunoId: this.editedAluno.id,
         documentId: document.id,
       });
       await this.fetchDocumentos(this.editedAluno.id);
       this.alunoDocuments = this.documentos;
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
   },
   created() {

@@ -361,3 +361,15 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Runtime data and generated outputs
+.env
+*.db
+*.db-*
+*.sqlite
+App_Data/
+.nuxt/
+dist/
+node_modules/
+captures/
+playwright-report/
+test-results/

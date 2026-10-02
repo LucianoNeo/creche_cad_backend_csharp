@@ -1,0 +1,25 @@
+name: crechecad
+services:
+  api:
+    build: .
+    environment:
+      Admin__Username: ${ADMIN_USERNAME:?Copy .env.example to .env first}
+      Admin__Password: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      Demo__Enabled: ${DEMO_ENABLED:-false}
+    volumes:
+      - school-data:/data
+    restart: unless-stopped
+  web:
+    build: src/creche_cad.Api/client-app
+    ports:
+      - "127.0.0.1:${PORT:-8082}:8080"
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+volumes:
+  school-data:

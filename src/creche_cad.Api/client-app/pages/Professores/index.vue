@@ -1,10 +1,10 @@
 <template>
-  <v-container>
+  <v-container class="records-page"><div class="page-header"><div><div class="eyebrow">SECRETARIA / CADASTROS</div><h1>Professores</h1><p>Contatos e documentos da equipe pedagógica.</p></div></div>
     <v-row>
       <v-col>
         <v-text-field
           v-model="search"
-          label="Buscar"
+          label="Buscar professores"
           outlined
           dense
           append-icon="mdi-magnify"
@@ -274,7 +274,7 @@
           </v-list>
           <v-file-input
             v-model="newDocumentFiles"
-            label="Adicionar Documentos"
+            label="Adicionar documentos (PDF, PNG, JPG ou TXT · até 5 MB)"
             prepend-icon="mdi-paperclip"
             multiple
             outlined
@@ -491,14 +491,16 @@ export default {
     ]),
 
     editItem(item) {
-      this.editedProfessor = { ...item };
+      this.editedProfessor = { ...item, dataAdmissao: item.dataAdmissao?.slice(0,10), dataDemissao: item.dataDemissao?.slice(0,10) };
       this.dialogEdit = true;
     },
 
     async saveEditedProfessorConfirm() {
+      try {
       await this.updateProfessor(this.editedProfessor);
       await this.fetchProfessores();
       this.closeEdit();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     deleteItem(item) {
@@ -507,9 +509,11 @@ export default {
     },
 
     async deleteProfessorConfirm() {
+      try {
       await this.deleteProfessor(this.itemToDelete);
       await this.fetchProfessores();
       this.closeDelete();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     closeEdit() {
@@ -530,6 +534,7 @@ export default {
     },
 
     async saveNewProfessorConfirm() {
+      try {
       if (this.validarProfessor()) {
         await this.createProfessor(this.newProfessor);
         this.fetchProfessores();
@@ -537,12 +542,13 @@ export default {
       } else {
         alert("Preencha todos os campos obrigatórios para criar um professor.");
       }
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     formatDate(date) {
       if (!date) return null;
 
-      const formattedDate = new Date(date);
+      const formattedDate = new Date(date.slice(0, 10) + "T12:00:00");
       const day = formattedDate.getDate().toString().padStart(2, "0");
       const month = (formattedDate.getMonth() + 1).toString().padStart(2, "0");
       const year = formattedDate.getFullYear();
@@ -558,10 +564,12 @@ export default {
     },
 
     async openDocuments(item) {
-      this.editedProfessor = { ...item };
+      try {
+      this.editedProfessor = { ...item, dataAdmissao: item.dataAdmissao?.slice(0,10), dataDemissao: item.dataDemissao?.slice(0,10) };
       await this.fetchDocumentosProfessores(item.id);
       this.professorDocuments = this.documentosProfessores;
       this.dialogDocuments = true;
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     closeDocuments() {
@@ -571,6 +579,7 @@ export default {
     },
 
     async uploadDocumentsHandler() {
+      try {
       if (this.newDocumentFiles.length > 0) {
         await this.uploadDocument({
           professorId: this.editedProfessor.id,
@@ -580,9 +589,11 @@ export default {
         await this.fetchDocumentosProfessores(this.editedProfessor.id);
         this.professorDocuments = this.documentosProfessores;
       }
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     async downloadAllDocumentsHandler() {
+      try {
       try {
         const success = await this.downloadAllDocuments({
           professorId: this.editedProfessor.id,
@@ -604,15 +615,18 @@ export default {
           error
         );
       }
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     async deleteDocumentHandler(document) {
+      try {
       await this.deleteDocument({
         professorId: this.editedProfessor.id,
         documentId: document.id,
       });
       await this.fetchDocumentosProfessores(this.editedProfessor.id);
       this.professorDocuments = this.documentosProfessores;
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     validarProfessor() {

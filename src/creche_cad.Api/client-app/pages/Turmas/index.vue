@@ -1,10 +1,10 @@
 <template>
-  <v-container>
+  <v-container class="records-page"><div class="page-header"><div><div class="eyebrow">SECRETARIA / CADASTROS</div><h1>Turmas</h1><p>Organize as turmas e mantenha os alunos vinculados.</p></div></div>
     <v-row>
       <v-col>
         <v-text-field
           v-model="search"
-          label="Buscar"
+          label="Buscar turmas"
           outlined
           dense
           append-icon="mdi-magnify"
@@ -165,9 +165,11 @@ export default {
     },
 
     async saveItemConfirm() {
+      try {
       await this.updateTurma(this.editedItem);
       this.fetchTurmas();
       this.closeEdit();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     deleteItem(item) {
@@ -176,9 +178,11 @@ export default {
     },
 
     async deleteItemConfirm() {
+      try {
       await this.deleteTurma(this.itemToDelete);
       this.fetchTurmas();
       this.closeDelete();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
 
     closeEdit() {
@@ -202,9 +206,11 @@ export default {
     },
 
     async saveNewItemConfirm() {
+      try {
       await this.createTurma(this.newItem);
       this.fetchTurmas();
       this.closeCreate();
+      } catch (_) { /* The API notification describes the failed operation. */ }
     },
   },
   created() {
@@ -223,5 +229,3 @@ export default {
   },
 };
 </script>
-
-

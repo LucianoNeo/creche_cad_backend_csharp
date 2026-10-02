@@ -1,91 +1,23 @@
 <template>
-  <v-row class="mt-8">
-    <v-col class="text-center">
-      <v-icon size="230" color="blue">mdi-book-account</v-icon>
-      <blockquote class="blockquote">
-        &#8220;Seja bem vindo(a) ao CrecheCad, acesse as seções no menu à
-        esquerda!&#8221;
-      </blockquote>
-      <div class="mt-10 text-left">
-        <span>Status da API: </span>
-        <v-icon :color="apiStatusColor">{{ apiStatusIcon }}</v-icon>
-      </div>
-      <div class="text-left">
-        <span>Status do Banco de Dados: </span>
-        <v-icon :color="dbStatusColor">{{ dbStatusIcon }}</v-icon>
-      </div>
-      <div class="text-left">
-        <span>Caminho do Banco de Dados: </span>
-        <span>{{ dbPath }}</span>
-      </div>
-    </v-col>
-  </v-row>
+  <section>
+    <div class="page-header"><div><div class="eyebrow">SECRETARIA / VISÃO GERAL</div><h1>Bom ter tudo em dia.</h1><p>Acompanhe os cadastros e encontre o que precisa.</p></div><div class="date-pill">{{ today }}</div></div>
+    <v-alert v-if="demo" text dense color="primary" icon="mdi-information-outline">Ambiente de demonstração · todos os dados são fictícios.</v-alert>
+    <div class="stats-grid"><nuxt-link v-for="card in cards" :key="card.label" :to="card.to" class="stat-card"><div class="stat-label">{{ card.label }}<v-icon color="primary">{{ card.icon }}</v-icon></div><strong>{{ card.count }}</strong><span>Ver cadastros <v-icon small>mdi-arrow-right</v-icon></span></nuxt-link></div>
+    <div class="overview-grid">
+      <v-card flat class="panel"><div class="panel-heading"><h2>Turmas da escola</h2><nuxt-link to="/Turmas">Ver todas</nuxt-link></div>
+        <div v-for="turma in turmas" :key="turma.id" class="class-row"><div class="class-symbol"><v-icon color="primary">mdi-flower-outline</v-icon></div><div><strong>{{ turma.nome }}</strong><small>{{ turma.metragem || 'Metragem não informada' }}</small></div><span class="class-count">{{ alunos.filter(a => a.turmaId === turma.id).length }} alunos</span></div>
+        <p v-if="!turmas.length" class="muted">Cadastre a primeira turma para começar.</p>
+      </v-card>
+      <v-card flat class="panel routine-panel"><div class="eyebrow">ROTINA ORGANIZADA</div><h2>Um cadastro completo.<br>Uma informação fácil<br>de encontrar.</h2><p>Consulte os responsáveis, atualize telefones e mantenha os documentos junto ao cadastro.</p><v-btn to="/Alunos" color="primary" large>Consultar alunos <v-icon right small>mdi-arrow-right</v-icon></v-btn><div class="routine-mark">c.</div></v-card>
+    </div>
+  </section>
 </template>
-
 <script>
-export default {
-  name: "WelcomePage",
-  data() {
-    return {
-      apiStatus: null,
-      dbStatus: null,
-      dbPath: null,
-    };
-  },
-  created() {
-    if (!this.$store.getters["auth/isAuthenticated"]) {
-      this.$router.push("/");
-    }
-    this.checkApiStatus();
-    this.checkDatabaseStatus();
-  },
-  methods: {
-    async checkApiStatus() {
-      try {
-        const response = await fetch("http://localhost:5210/api/turma");
-        if (response.ok) {
-          this.apiStatus = "OK";
-        } else {
-          this.apiStatus = "Falha";
-        }
-      } catch (error) {
-        console.error("Erro ao verificar o status da API:", error);
-        this.apiStatus = "Falha";
-      }
-    },
-    async checkDatabaseStatus() {
-      try {
-        // Realize uma chamada para verificar se o banco de dados está configurado
-        // Substitua "sua_url_da_api" pela URL real da sua API
-        const response = await fetch(
-          "http://localhost:5210/api/database/check-database"
-        );
-        if (response.ok) {
-          const data = await response.json();
-          this.dbStatus = "OK";
-          this.dbPath = data.dbPath;
-        } else {
-          this.dbStatus = "Falha";
-        }
-      } catch (error) {
-        console.error("Erro ao verificar o status do banco de dados:", error);
-        this.dbStatus = "Falha";
-      }
-    },
-  },
+import api from '~/utils/api';
+export default { data: () => ({ alunos: [], turmas: [], professores: [], demo: false }),
   computed: {
-    apiStatusColor() {
-      return this.apiStatus === "OK" ? "green" : "red";
-    },
-    apiStatusIcon() {
-      return this.apiStatus === "OK" ? "mdi-check-circle" : "mdi-alert-circle";
-    },
-    dbStatusColor() {
-      return this.dbStatus === "OK" ? "green" : "red";
-    },
-    dbStatusIcon() {
-      return this.dbStatus === "OK" ? "mdi-check-circle" : "mdi-alert-circle";
-    },
-  },
+    today() { return new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }); },
+    cards() { return [ { label: 'Alunos matriculados', count: this.alunos.length, to: '/Alunos', icon: 'mdi-account-group-outline' }, { label: 'Turmas cadastradas', count: this.turmas.length, to: '/Turmas', icon: 'mdi-home-group' }, { label: 'Professores', count: this.professores.length, to: '/Professores', icon: 'mdi-school-outline' } ]; }
+  }, async mounted() { try { const [a,t,p,status] = await Promise.all(['/api/aluno','/api/turma','/api/professor','/api/database/check-database'].map(url => api.get(url))); this.alunos=a.data; this.turmas=t.data; this.professores=p.data; this.demo=status.data.demo; } catch (_) {} }
 };
 </script>

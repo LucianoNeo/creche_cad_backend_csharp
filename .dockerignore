@@ -1,0 +1,13 @@
+.git
+**/node_modules
+**/bin
+**/obj
+**/.nuxt
+**/dist
+**/Data
+**/App_Data
+**/*.db
+**/*.db-*
+.env
+tests
+docs

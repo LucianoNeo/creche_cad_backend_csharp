@@ -1,8 +1,6 @@
-﻿namespace creche_cad.Domain.Models
-{
-    public class TurmaInputModel
-    {
-        public string Nome { get; set; }
-        public string? Metragem { get; set; }
-    }
+using System.ComponentModel.DataAnnotations;
+namespace creche_cad.Domain.Models;
+public class TurmaInputModel {
+    [Required, StringLength(100)] public string Nome { get; set; } = "";
+    [StringLength(50)] public string? Metragem { get; set; }
 }
