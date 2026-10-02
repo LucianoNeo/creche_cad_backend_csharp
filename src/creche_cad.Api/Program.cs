@@ -62,6 +62,11 @@ using (var scope = app.Services.CreateScope()) {
         user.PasswordHash=scope.ServiceProvider.GetRequiredService<PasswordHasher<SchoolUser>>().HashPassword(user,password);
         context.Users.Add(user); await context.SaveChangesAsync();
     }
+    if(args.Contains("--reset-admin")) {
+        var name=(builder.Configuration["Admin:Username"]??"").ToLowerInvariant();var user=await context.Users.SingleOrDefaultAsync(u=>u.Username==name)??throw new InvalidOperationException("Administrator not found.");
+        var password=builder.Configuration["Admin:Password"]??"";if(password.Length<12)throw new InvalidOperationException("Password requires 12 characters.");
+        user.PasswordHash=scope.ServiceProvider.GetRequiredService<PasswordHasher<SchoolUser>>().HashPassword(user,password);user.SecurityStamp=Guid.NewGuid().ToString("N");user.Active=true;user.Role="Administrator";await context.SaveChangesAsync();Console.WriteLine("Administrator access restored.");return;
+    }
     if (builder.Configuration.GetValue<bool>("Demo:Enabled")) await DemoData.SeedAsync(context);
 }
 app.UseExceptionHandler();

@@ -9,11 +9,13 @@ using System.Security.Claims;
 namespace creche_cad.Controllers;
 [ApiController,Route("api/users"),Authorize(Roles="Administrator")]
 public class UsersController(CrecheDbContext db,PasswordHasher<SchoolUser> hasher):ControllerBase {
- [HttpGet] public async Task<IActionResult> List() => Ok(await db.Users.OrderBy(u=>u.Username).Select(u=>new {u.Id,u.Username,u.Role,u.Active}).ToListAsync());
+ [HttpGet] public async Task<IActionResult> List(int page=1,int pageSize=10,string? q=null) {
+ page=Math.Clamp(page,1,100000);pageSize=Math.Clamp(pageSize,1,100);var query=db.Users.AsNoTracking();if(!string.IsNullOrWhiteSpace(q))query=query.Where(u=>u.Username.Contains(q));return Ok(new{items=await query.OrderBy(u=>u.Username).Skip((page-1)*pageSize).Take(pageSize).Select(u=>new{u.Id,u.Username,u.Role,u.Active}).ToListAsync(),total=await query.CountAsync()});
+ }
  [HttpPost] public async Task<IActionResult> Create(UserInput input) {
   var name=input.Username.Trim().ToLowerInvariant();
   if(!new[]{"Administrator","Secretary","Viewer"}.Contains(input.Role)) return BadRequest();
-  if(await db.Users.AnyAsync(u=>u.Username==name)) return Conflict(new {message="Esse usuário já existe."});
+  if(await db.Users.AnyAsync(u=>u.Username==name)) return Conflict(new {message="Esse usuÃ¡rio jÃ¡ existe."});
   var user=new SchoolUser {Username=name,Role=input.Role}; user.PasswordHash=hasher.HashPassword(user,input.Password);
   db.Users.Add(user); await db.SaveChangesAsync(); return Created($"/api/users/{user.Id}",new{user.Id,user.Username,user.Role});
  }
