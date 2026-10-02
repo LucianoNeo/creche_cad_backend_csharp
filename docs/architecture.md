@@ -1,63 +1,59 @@
-# Como a aplicação funciona
+# Contratos e fluxos
 
 ```mermaid
 flowchart LR
-    Browser[Navegador · Vue / Nuxt] --> Nginx[Nginx · porta 8082]
-    Nginx -->|/api · mesma origem| API[ASP.NET Core / C#]
-    API -->|EF Core| DB[(SQLite)]
-    DB --- Volume[Volume Docker · school-data]
-    API --> Session[Cookie HttpOnly + CSRF]
-    API --> Backup[Snapshot SQLite para download]
+ Browser[Vue 3 / Nuxt 4] --> Nginx[Nginx :8082]
+ Nginx --> API[ASP.NET Core / .NET 10]
+ API --> DB[(SQLite / school-data)]
+ API --> Access[Cookie HttpOnly / CSRF / perfis]
+ DB --> Audit[Histórico de alterações]
+ API --> Backup[Snapshot para download]
 ```
 
 ## Organização
 
-- `src/creche_cad.Api`: controllers, autenticação, bootstrap e fixtures da demonstração.
-- `src/creche_cad.Domain`: entidades, contratos de entrada e DTOs.
+- `frontend/`: Vue 3/Nuxt 4, formulários, busca, paginação, documentos e administração.
+- `src/creche_cad.Api`: controllers, acesso, bootstrap e dados fictícios.
+- `src/creche_cad.Domain`: entidades, entradas e DTOs.
 - `src/creche_cad.Data`: contexto, mapeamentos e migrations.
-- `src/creche_cad.Service`: utilitário de formatação do projeto original; os fluxos atuais não dependem dele.
-- `src/creche_cad.Api/client-app`: interface original em Vue/Nuxt, com a revisão de navegação e formulários.
-- `tests`: verificações HTTP e navegação contra os containers completos.
+- `tests/`: verificações contra os containers completos.
 
-Os controllers acessam o `DbContext` diretamente. Para esses cadastros, uma camada de repositórios repetiria os métodos do EF sem acrescentar uma regra de domínio. Operações de banco usam chamadas assíncronas e recebem o token de cancelamento da requisição.
+Os controllers usam o DbContext diretamente. As consultas são assíncronas e a listagem de alunos projeta o nome da turma junto ao registro. O histórico é incluído no mesmo SaveChanges que altera os dados.
 
-## Sessão e acesso
+## Sessão
 
-`GET /api/auth/csrf` fornece um token para o navegador. O login exige esse token no header `X-CSRF-TOKEN` e valida a senha no servidor com o `PasswordHasher` do ASP.NET Core. Após o login, o navegador renova o token porque a identidade mudou. A sessão usa cookie HttpOnly; a senha não fica no bundle da interface e o token de CSRF fica em memória.
+`GET /api/auth/csrf` fornece o token de CSRF. Login e escritas enviam `X-CSRF-TOKEN`. O login compara o hash no servidor e estabelece um cookie HttpOnly com prazo de duas horas. Cada requisição confere se a conta continua ativa e se o identificador de segurança coincide. Mudança de senha, perfil ou ativação invalida sessões existentes.
 
-Os endpoints de cadastros e documentos exigem sessão. Backup e verificação do banco também exigem o papel `Administrator`. Há uma única conta por instalação, definida por variáveis de ambiente. Os endpoints públicos são saúde, obtenção do token CSRF e tentativa de login.
+Administrador gerencia usuários, auditoria e backups. Secretaria altera cadastros e documentos. Consulta lê esses registros; a API bloqueia suas escritas mesmo que alguém manipule o navegador.
 
-## Rotas principais
+## Rotas
 
 | Método | Rota | Uso |
 | --- | --- | --- |
-| POST | `/api/auth/login` | Iniciar sessão |
-| GET | `/api/auth/me` | Restaurar a identidade ao recarregar |
-| POST | `/api/auth/logout` | Encerrar sessão |
-| GET / POST | `/api/aluno`, `/api/turma`, `/api/professor` | Listar e criar |
-| GET / PUT / DELETE | `/api/{recurso}/{id}` | Consultar, editar e excluir |
-| POST | `/api/documento/aluno/{id}/upload` | Anexar arquivos ao aluno |
-| GET | `/api/documento/aluno/{id}/documentos` | Listar metadados dos anexos |
-| GET | `/api/documento/aluno/{id}/download` | Baixar todos em ZIP |
-| GET | `/api/documento/{id}/download` | Baixar um arquivo |
-| DELETE | `/api/documento/{id}` | Excluir um anexo |
-| GET | `/api/database/backup` | Baixar snapshot consistente |
+| POST | `/api/auth/login`, `/api/auth/logout` | Sessão |
+| GET | `/api/auth/me`, `/api/auth/csrf` | Identidade e CSRF |
+| POST | `/api/auth/change-password` | Alterar a própria senha |
+| POST | `/api/auth/recovery` | Solicitar recuperação |
+| GET / POST | `/api/aluno`, `/api/turma`, `/api/professor` | Busca paginada e criação |
+| GET / PUT / DELETE | `/api/{recurso}/{id}` | Consulta, atualização e exclusão |
+| GET / POST | `/api/users` | Equipe; lista paginada |
+| PUT | `/api/users/{id}` | Perfil e situação da conta |
+| POST | `/api/users/{id}/reset-password` | Nova senha e encerramento da recuperação |
+| GET | `/api/users/recoveries`, `/api/users/audit` | Solicitações e auditoria paginada |
+| GET | `/api/dashboard` | Totais e alunos por turma |
+| POST | `/api/documento/aluno/{id}/upload` | Anexos; também aceita professor |
+| GET | `/api/documento/aluno/{id}/documentos` | Metadados; também aceita professor |
+| GET | `/api/documento/aluno/{id}/download` | ZIP; também aceita professor |
+| GET / DELETE | `/api/documento/{id}` | Exclusão do anexo |
+| GET | `/api/documento/{id}/download` | Download individual |
+| GET | `/api/database/backup` | Snapshot autenticado |
 
-As rotas de documentos também aceitam `professor` no lugar de `aluno`. Escritas exigem `X-CSRF-TOKEN`.
+Listas aceitam `page`, `pageSize` e `q` e devolvem `{items,total}`. O tamanho máximo da página é 100; a interface usa 10 registros. Auditoria usa 25 por página. Validações devolvem 400, referências inexistentes 404 e exclusão de turma ocupada 409.
 
-## Pontos que foram corrigidos
+## Esquema e arquivos
 
-- O login anterior comparava credenciais no JavaScript, enquanto a API continuava pública.
-- A busca de alunos consultava a turma individualmente para cada registro. Agora o EF gera uma projeção com JOIN.
-- Um `TurmaId` inexistente causava erro interno; agora gera resposta de validação.
-- A criação do professor copiava o telefone secundário para o celular. Os campos agora são independentes.
-- A exclusão de turma com alunos é bloqueada antes de remover os registros.
-- Os uploads têm limites, conferem o vínculo e o formato e removem caminhos do nome recebido.
-- O backup deixou de copiar o arquivo aberto para um diretório fixo do Windows; usa o mecanismo de backup do SQLite e retorna um download autenticado.
-- O processo deixou de abrir um navegador automaticamente e de fixar a porta da API no código.
+As migrations de 2024 são preservadas. A migration CompleteSchoolAccess atualiza relacionamentos e adiciona usuários, solicitações e auditoria; o snapshot foi atualizado para EF Core 10. O CI constrói a mesma sequência de migrations entregue no repositório.
 
-## Migrations e evolução
+Documentos são vinculados a um aluno ou professor existente, sem caminhos recebidos do navegador. O servidor valida extensão, assinatura e limites. O snapshot inclui cadastros, usuários, histórico e documentos. Somente Administrador pode baixá-lo.
 
-As migrations originais são aplicadas na inicialização e verificadas com um banco vazio no CI. O modelo não recebeu novas colunas nesta revisão. O aviso de comparação de modelo do EF 10 é ignorado explicitamente, pois o snapshot foi gerado pelo EF 6; antes de alterar o esquema, será necessário atualizar esse snapshot e conferir a migration gerada.
-
-O front continua em Vue/Nuxt 2. Ferramentas Nuxt ficam apenas na etapa de build; o container da interface executa Nginx e serve arquivos estáticos. Essa separação não elimina os alertas do ecossistema legado. A migração do front, usuários por funcionário e auditoria estão descritos como pendências no README.
+O Nuxt é usado na compilação da SPA. O container final serve os arquivos estáticos com Nginx; não executa Node ou um servidor de desenvolvimento.

@@ -2,106 +2,112 @@
 
 [![Verificação](https://github.com/LucianoNeo/creche_cad_backend_csharp/actions/workflows/crechecad-ci.yml/badge.svg)](https://github.com/LucianoNeo/creche_cad_backend_csharp/actions/workflows/crechecad-ci.yml)
 
-Cadastro de alunos, turmas, professores e documentos, com API em C# e interface em Vue/Nuxt. O projeto começou em 2024; esta revisão organiza a execução com Docker, substitui o login feito no navegador por autenticação no servidor e corrige problemas nos cadastros e no backup.
+Aplicação para a rotina de uma secretaria escolar: alunos, turmas, professores, contatos e documentos. Desenvolvi o projeto em C# e Vue; nesta versão, atualizei a API para .NET 10 e a interface para Vue 3/Nuxt 4, com contas da equipe, permissões e histórico de alterações.
 
-## A aplicação em funcionamento / Screenshots
+## Experimentar em cinco minutos
 
-Capturas reais feitas pelo Playwright no GitHub Actions, com um banco novo e dados fictícios. A mesma execução verifica os fluxos da API e da interface.
+É necessário ter Git e Docker com Compose. A instalação compila a aplicação nos containers; não exige Node, .NET ou banco separados.
 
-### Visão geral / Overview
-
-![Visão geral com os totais e as turmas da demonstração](docs/images/overview.png)
-
-### Alunos / Students
-
-![Consulta e edição de alunos](docs/images/students.png)
-
-### Documentos / Documents
-
-![Documentos vinculados ao cadastro de um aluno](docs/images/documents.png)
-
-<details>
-<summary>Turmas, professores e versão para celular / Classes, teachers and mobile</summary>
-
-![Cadastro de turmas](docs/images/classes.png)
-
-![Cadastro de professores](docs/images/teachers.png)
-
-<img src="docs/images/mobile.png" alt="Visão geral no celular" width="390" />
-
-</details>
-
-## Experimentar
-
-É necessário ter Docker com Compose. Não precisa instalar .NET, Node ou SQLite.
-
-```bash
+```sh
 git clone https://github.com/LucianoNeo/creche_cad_backend_csharp.git
 cd creche_cad_backend_csharp
 cp .env.example .env
 docker compose up --build --detach --wait
 ```
 
-No PowerShell, use `Copy-Item .env.example .env` no lugar de `cp`.
+No PowerShell, use `Copy-Item .env.example .env`. Abra **http://localhost:8082** e entre com `secretaria` / `CrecheCad-Demo-2026!`. A demonstração cria apenas registros fictícios em um banco vazio.
 
-Abra **http://localhost:8082**. A demonstração usa o usuário `secretaria` e a senha `CrecheCad-Demo-2026!`. Os registros são fictícios e só são criados quando `DEMO_ENABLED=true` e o banco está vazio.
+1. Consulte os totais e as turmas na visão geral.
+2. Crie uma turma, cadastre um aluno e edite seu telefone. Busque pelo nome e percorra as páginas.
+3. Anexe um PDF, PNG, JPG ou TXT ao cadastro; baixe um arquivo ou todos em ZIP.
+4. Em **Usuários**, crie uma conta com perfil Consulta. Entre com ela e confira que pode ler, mas não alterar cadastros.
+5. Volte ao administrador, altere o perfil para Secretaria, redefina a senha ou desative a conta. Sessões antigas são invalidadas quando o acesso muda.
+6. Consulte **Auditoria** e baixe uma cópia completa em **Backup**.
 
-Para parar, execute `docker compose down`. Os cadastros e as chaves de sessão ficam no volume `school-data` e continuam disponíveis ao iniciar novamente. `docker compose down --volumes` apaga esse volume: use apenas quando quiser descartar a demonstração.
+## Telas da aplicação
 
-## O que avaliar
+Capturas feitas com Playwright no GitHub Actions, na mesma aplicação que o Compose entrega e com dados fictícios.
 
-- Entre e consulte a visão geral da escola.
-- Crie uma turma e cadastre um aluno nela. Uma turma com alunos não pode ser excluída sem transferi-los primeiro.
-- Edite um cadastro e anexe um PDF, PNG, JPG ou TXT: até três arquivos por envio, com limite de 5 MB por arquivo.
-- Consulte os documentos pelo cadastro e baixe um ZIP.
-- Baixe um backup do SQLite pelo menu Backup.
+![Visão geral](docs/images/overview.png)
 
-## Decisões técnicas
+![Alunos com busca e paginação](docs/images/students.png)
 
-| Parte | Implementação |
+![Documentos do aluno](docs/images/documents.png)
+
+<details><summary>Equipe, auditoria, turmas, professores e celular</summary>
+
+![Usuários e permissões](docs/images/users.png)
+
+![Histórico de alterações](docs/images/audit.png)
+
+![Turmas](docs/images/classes.png)
+
+![Professores](docs/images/teachers.png)
+
+<img src="docs/images/mobile.png" alt="Visão geral no celular" width="390" />
+
+</details>
+
+## Implementação
+
+| Parte | Tecnologia / decisão |
 | --- | --- |
-| API | ASP.NET Core / .NET 10, controllers e validação de entrada |
-| Dados | EF Core, SQLite e migrations existentes |
-| Interface | Vue 2.7, Nuxt 2 e Vuetify 2, preservando o front original |
-| Sessão | Cookie HttpOnly, expiração de duas horas, CSRF nas operações de escrita e limitação de tentativas de login |
-| Execução | API e Nginx em containers separados, mesma origem e volume persistente |
-| Verificação | Playwright contra a aplicação completa no GitHub Actions |
+| API | C# / ASP.NET Core .NET 10; controllers e validação de entrada |
+| Dados | EF Core, SQLite e migrations versionadas |
+| Interface | Vue 3, Nuxt 4; SPA estática servida pelo Nginx |
+| Acesso | PasswordHasher, cookie HttpOnly, CSRF, limitação de tentativas e revogação por alteração de acesso |
+| Equipe | Administrador, Secretaria e Consulta; permissões verificadas no servidor |
+| Registros | Busca e paginação no servidor; identificação de autor, operação e cadastro na auditoria |
+| Arquivos | Validação de vínculo, tamanho, extensão e assinatura; download individual e ZIP |
+| Execução | Docker Compose, processos sem root e volume persistente |
+| Verificação | Playwright contra a API e o navegador em GitHub Actions |
 
-O SQLite mantém a instalação simples para uma secretaria e permite levar o projeto para outro ambiente sem configurar um servidor de banco. Documentos pequenos ficam no banco para serem incluídos no mesmo backup. A listagem de alunos projeta os dados e o nome da turma em uma única consulta; o backup usa a API de snapshot do SQLite, sem copiar o arquivo enquanto ele pode estar sendo alterado.
+Escolhi SQLite para manter a instalação simples para uma escola. Os documentos ficam no mesmo banco e entram no backup. A consulta de alunos projeta o nome da turma junto ao cadastro; o backup usa a API de snapshot do SQLite. O histórico registra identificadores e operações, sem copiar senhas ou o conteúdo dos documentos.
 
-Veja as [rotas, o fluxo de sessão e as correções](docs/architecture.md) para uma leitura do código.
+A aplicação atende uma escola por instalação. Secretaria administra os cadastros; Consulta lê; Administrador também gerencia usuários, auditoria e backups. Uma turma com alunos precisa ser esvaziada antes da exclusão. Cada envio aceita até três arquivos de 5 MB.
 
-`src/creche_cad.Api` é o ponto de entrada utilizado pelo Docker. A API duplicada da raiz foi removida para manter um único ponto de entrada.
+Veja os [contratos e fluxos](docs/architecture.md).
 
-## Limites desta versão
+## Contas e recuperação
 
-Esta distribuição é uma demonstração para avaliação técnica. Tem uma conta administrativa configurada por ambiente; não implementa múltiplas escolas, perfis por funcionário, trilha de auditoria ou recuperação de senha. Arquivos têm limites e checagem básica de formato, sem serviço de antivírus. Listagens atendem um conjunto pequeno de cadastros; paginação no servidor e armazenamento externo de documentos são próximos passos para maior volume.
+A conta de `.env` inicializa o primeiro administrador. As demais contas são criadas em **Usuários** e ficam no banco. **Minha conta** permite mudar a própria senha.
 
-O front preserva [Nuxt 2, que encerrou o suporte oficial](https://nuxt.com/blog/nuxt2-eol). A migração para Vue/Nuxt atuais está pendente. Antes de usar dados reais, também são necessários HTTPS, gestão de usuários, proteção de backups e revisão das regras de acesso e retenção. Defina uma senha própria e desative `DEMO_ENABLED`. Fora do modo demo, o cookie de sessão exige HTTPS.
+**Esqueci minha senha** registra uma solicitação para a secretaria. O administrador vê as solicitações em Usuários e redefine a senha; a solicitação é encerrada e as sessões anteriores deixam de valer. Esse fluxo não depende de e-mail.
 
-O banco que estava versionado foi retirado desta revisão e é excluído do contexto Docker. As capturas e verificações usam um banco novo com dados fictícios. Esta alteração não reescreve o histórico Git.
+Se perder a senha do único administrador, defina uma nova `ADMIN_PASSWORD` em `.env` e execute:
 
-## Verificação remota
+```sh
+docker compose stop api
+docker compose run --rm api dotnet creche_cad.Api.dll --reset-admin
+docker compose up -d
+```
 
-O [workflow](.github/workflows/crechecad-ci.yml) constrói os containers, executa os testes de API e navegação e gera capturas reais da interface como artefatos. Para repetir em seu ambiente de avaliação:
+O comando restaura a conta indicada por `ADMIN_USERNAME`, preservando os cadastros.
 
-```bash
-docker compose up --build --detach --wait
+## Dados e backup
+
+`docker compose down` encerra a aplicação e mantém o volume `school-data`. `docker compose up -d` retoma a instalação. O volume guarda o SQLite e as chaves da sessão. `docker compose down --volumes` descarta o banco da demonstração.
+
+O download de Backup é um SQLite completo. Para restaurá-lo, pare a API, substitua `/data/crechecad.db` no volume pela cópia e remova os arquivos `crechecad.db-wal` e `crechecad.db-shm` dessa instalação parada; então inicie novamente. Guarde os backups de forma privada: eles incluem cadastros e hashes de senha.
+
+A configuração de avaliação publica somente em `127.0.0.1`. Para hospedar com dados próprios, configure HTTPS no proxy, senha administrativa própria e `DEMO_ENABLED=false`; nesse modo, os cookies exigem HTTPS. A versão anterior do banco foi retirada dos arquivos atuais e do contexto Docker. As capturas usam um banco novo; o histórico Git foi preservado.
+
+## Verificação
+
+O [workflow](.github/workflows/crechecad-ci.yml) compila as imagens, aplica as migrations em um banco vazio, sobe o Compose, verifica os fluxos HTTP e percorre as telas no Chromium. Relatórios, traces e capturas ficam nos artefatos. Os testes cobrem acesso, CSRF, CRUD, datas, vínculos, documentos, backup, recuperação, permissões, revogação, auditoria, paginação e navegação desktop/celular.
+
+Para repetir em uma demonstração descartável com o Compose ativo:
+
+```sh
 npm ci
 npx playwright install chromium
 npm test
 ```
 
-Os testes usam a demonstração e modificam registros. Execute em uma instalação descartável.
-
----
-
 ## English
 
-CrecheCad manages students, classes, teachers and their documents. It pairs a C#/.NET 10 API with the original Vue/Nuxt frontend. This revision adds server-side sessions, CSRF protection, input and upload validation, Docker Compose and remote end-to-end verification.
+CrecheCad is a school administration application with a C#/.NET 10 API and a Vue 3/Nuxt 4 interface. It manages students, classes, teachers and documents, with staff accounts, three permission levels, password changes, administrator-managed recovery, audit history and server-side search/pagination.
 
-To review it, clone the repository, copy `.env.example` to `.env` and run `docker compose up --build --detach --wait`. Open **http://localhost:8082** and use `secretaria` / `CrecheCad-Demo-2026!`. Demo data is fictional and is only seeded into an empty database when explicitly enabled.
+Clone the repository, copy `.env.example` to `.env`, run `docker compose up --build --detach --wait` and open **http://localhost:8082**. Use `secretaria` / `CrecheCad-Demo-2026!`. All seeded records are fictional. Only Git and Docker Compose are required.
 
-SQLite and session keys persist in the Docker volume. The backup endpoint uses SQLite's online backup API. The student list retrieves class names in a single projected query. Uploads support PDF, PNG, JPG and TXT, with up to three files per request and 5 MB per file.
-
-This is a reviewable demo with one administrative account, not a multi-school service. Staff roles, audit history, password recovery, server-side pagination and malware scanning are not implemented. The original Nuxt 2 frontend is beyond its official support period; migration is pending. Real deployment also requires HTTPS, a private password, demo mode disabled, protected backups and a review of access and retention rules. The legacy database is excluded from this revision and all container images; Git history has not been rewritten.
+SQLite data and session keys persist in a named volume. Migrations are versioned and applied at startup. Backups use SQLite's snapshot API. GitHub Actions builds the complete stack and verifies API and browser workflows with Playwright; the screenshots above come from that run.
