@@ -40,7 +40,7 @@ Para parar, execute `docker compose down`. Os cadastros e as chaves de sessão f
 
 O SQLite mantém a instalação simples para uma secretaria e permite levar o projeto para outro ambiente sem configurar um servidor de banco. Documentos pequenos ficam no banco para serem incluídos no mesmo backup. A listagem de alunos projeta os dados e o nome da turma em uma única consulta; o backup usa a API de snapshot do SQLite, sem copiar o arquivo enquanto ele pode estar sendo alterado.
 
-`src/creche_cad.Api` é o ponto de entrada utilizado pelo Docker. O projeto de API na raiz é histórico e não participa dessa execução.
+`src/creche_cad.Api` é o ponto de entrada utilizado pelo Docker. A API duplicada da raiz foi removida para manter um único ponto de entrada.
 
 ## Limites desta versão
 

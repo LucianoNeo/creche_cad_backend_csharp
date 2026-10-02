@@ -5,7 +5,6 @@
     <ProjectReference Include="../creche_cad.Data/creche_cad.Data.csproj" />
     <ProjectReference Include="../creche_cad.Domain/creche_cad.Domain.csproj" />
     <ProjectReference Include="../creche_cad.Service/creche_cad.Service.csproj" />
-    <Compile Remove="Helpers/NuxtHelper.cs" />
     <Content Remove="client-app/**" /><None Remove="client-app/**" />
   </ItemGroup>
 </Project>
