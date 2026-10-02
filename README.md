@@ -60,7 +60,6 @@ Capturas feitas com Playwright no GitHub Actions, na mesma aplicação que o Com
 | Registros | Busca e paginação no servidor; identificação de autor, operação e cadastro na auditoria |
 | Arquivos | Validação de vínculo, tamanho, extensão e assinatura; download individual e ZIP |
 | Execução | Docker Compose, processos sem root e volume persistente |
-| Verificação | Playwright contra a API e o navegador em GitHub Actions |
 
 Escolhi SQLite para manter a instalação simples para uma escola. Os documentos ficam no mesmo banco e entram no backup. A consulta de alunos projeta o nome da turma junto ao cadastro; o backup usa a API de snapshot do SQLite. O histórico registra identificadores e operações, sem copiar senhas ou o conteúdo dos documentos.
 
@@ -93,6 +92,8 @@ O download de Backup é um SQLite completo. Para restaurá-lo, pare a API, subst
 A configuração de avaliação publica somente em `127.0.0.1`. Para hospedar com dados próprios, configure HTTPS no proxy, senha administrativa própria e `DEMO_ENABLED=false`; nesse modo, os cookies exigem HTTPS. A versão anterior do banco foi retirada dos arquivos atuais e do contexto Docker. As capturas usam um banco novo; o histórico Git foi preservado.
 
 ## Verificação
+
+Os testes usam Playwright contra a API e o navegador em GitHub Actions.
 
 O [workflow](.github/workflows/crechecad-ci.yml) compila as imagens, aplica as migrations em um banco vazio, sobe o Compose, verifica os fluxos HTTP e percorre as telas no Chromium. Relatórios, traces e capturas ficam nos artefatos. Os testes cobrem acesso, CSRF, CRUD, datas, vínculos, documentos, backup, recuperação, permissões, revogação, auditoria, paginação e navegação desktop/celular.
 
