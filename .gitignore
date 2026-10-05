@@ -373,3 +373,4 @@ node_modules/
 captures/
 playwright-report/
 test-results/
+.output/
