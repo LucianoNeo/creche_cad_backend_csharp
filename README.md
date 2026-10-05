@@ -1,7 +1,5 @@
 # CrecheCad
 
-[![Verificação](https://github.com/LucianoNeo/creche_cad_backend_csharp/actions/workflows/crechecad-ci.yml/badge.svg)](https://github.com/LucianoNeo/creche_cad_backend_csharp/actions/workflows/crechecad-ci.yml)
-
 Aplicação para a rotina de uma secretaria escolar: alunos, turmas, professores, contatos e documentos. Desenvolvi o projeto em C# e Vue; nesta versão, atualizei a API para .NET 10 e a interface para Vue 3/Nuxt 4, com contas da equipe, permissões e histórico de alterações.
 
 ## Experimentar em cinco minutos
@@ -26,7 +24,7 @@ No PowerShell, use `Copy-Item .env.example .env`. Abra **http://localhost:8082**
 
 ## Telas da aplicação
 
-Capturas feitas com Playwright no GitHub Actions, na mesma aplicação que o Compose entrega e com dados fictícios.
+Capturas da aplicação executada com dados fictícios.
 
 ![Visão geral](docs/images/overview.png)
 
@@ -52,14 +50,31 @@ Capturas feitas com Playwright no GitHub Actions, na mesma aplicação que o Com
 
 | Parte | Tecnologia / decisão |
 | --- | --- |
-| API | C# / ASP.NET Core .NET 10; controllers e validação de entrada |
-| Dados | EF Core, SQLite e migrations versionadas |
+| API | C# / ASP.NET Core .NET 10; controllers finos e composição de dependências |
+| Domínio | Entidades e contratos sem dependência do banco ou da interface |
+| Serviço | Casos de uso CQRS com Mediator e validação FluentValidation |
+| Dados | EF Core, SQLite, migrations versionadas e outbox transacional |
+| Cache e eventos | Redis para o resumo; RabbitMQ para invalidar o cache após alterações |
+| Worker | Serviço separado que publica eventos persistidos e invalida o resumo; payload sem dados pessoais |
 | Interface | Vue 3, Nuxt 4; SPA estática servida pelo Nginx |
 | Acesso | PasswordHasher, cookie HttpOnly, CSRF, limitação de tentativas e revogação por alteração de acesso |
 | Equipe | Administrador, Secretaria e Consulta; permissões verificadas no servidor |
 | Registros | Busca e paginação no servidor; identificação de autor, operação e cadastro na auditoria |
 | Arquivos | Validação de vínculo, tamanho, extensão e assinatura; download individual e ZIP |
 | Execução | Docker Compose, processos sem root e volume persistente |
+
+```mermaid
+flowchart LR
+  Browser[Navegador] --> Web[Vue / Nginx]
+  Web --> API[API .NET]
+  API --> Service[Service / Mediator / FluentValidation]
+  Service --> Data[Data / EF Core]
+  Data --> DB[(SQLite)]
+  Data --> Outbox[Outbox sem dados pessoais]
+  Outbox --> Worker[Worker .NET]
+  Worker --> Rabbit[RabbitMQ]
+  Rabbit --> Cache[Redis / invalidação do resumo]
+```
 
 Escolhi SQLite para manter a instalação simples para uma escola. Os documentos ficam no mesmo banco e entram no backup. A consulta de alunos projeta o nome da turma junto ao cadastro; o backup usa a API de snapshot do SQLite. O histórico registra identificadores e operações, sem copiar senhas ou o conteúdo dos documentos.
 
@@ -93,15 +108,16 @@ A configuração de avaliação publica somente em `127.0.0.1`. Para hospedar co
 
 ## Verificação
 
-Os testes usam Playwright contra a API e o navegador em GitHub Actions.
+Os testes de domínio e validação podem ser executados com o SDK .NET 10:
 
-O [workflow](.github/workflows/crechecad-ci.yml) compila as imagens, aplica as migrations em um banco vazio, sobe o Compose, verifica os fluxos HTTP e percorre as telas no Chromium. Relatórios, traces e capturas ficam nos artefatos. Os testes cobrem acesso, CSRF, CRUD, datas, vínculos, documentos, backup, recuperação, permissões, revogação, auditoria, paginação e navegação desktop/celular.
+```sh
+dotnet test tests/creche_cad.Tests/creche_cad.Tests.csproj
+```
 
-Para repetir em uma demonstração descartável com o Compose ativo:
+Os fluxos da aplicação também podem ser percorridos contra uma demonstração descartável com o Compose ativo. Eles verificam acesso, CSRF, CRUD, datas, vínculos, documentos, backup, recuperação, permissões, revogação, auditoria, paginação e navegação em telas de vários tamanhos:
 
 ```sh
 npm ci
-npx playwright install chromium
 npm test
 ```
 
@@ -111,4 +127,4 @@ CrecheCad is a school administration application with a C#/.NET 10 API and a Vue
 
 Clone the repository, copy `.env.example` to `.env`, run `docker compose up --build --detach --wait` and open **http://localhost:8082**. Use `secretaria` / `CrecheCad-Demo-2026!`. All seeded records are fictional. Only Git and Docker Compose are required.
 
-SQLite data and session keys persist in a named volume. Migrations are versioned and applied at startup. Backups use SQLite's snapshot API. GitHub Actions builds the complete stack and verifies API and browser workflows with Playwright; the screenshots above come from that run.
+SQLite data and session keys persist in a named volume. Migrations are versioned and applied at startup. Backups use SQLite's snapshot API. The solution separates API, Domain, Data, Service and Worker projects. Mediator handlers validate use cases with FluentValidation, Redis caches the dashboard summary, and a transactional outbox publishes a payload without student data to RabbitMQ so the worker can invalidate the cached summary. Local .NET and browser tests are documented above.

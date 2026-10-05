@@ -1,13 +1,60 @@
 name: crechecad
 services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-crechecad}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-crechecad-local-only}
+    ports:
+      - "127.0.0.1:${RABBITMQ_PORT:-15673}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
   api:
     build: .
     environment:
       Admin__Username: ${ADMIN_USERNAME:?Copy .env.example to .env first}
       Admin__Password: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       Demo__Enabled: ${DEMO_ENABLED:-false}
+      ConnectionStrings__Redis: redis:6379,abortConnect=false,connectTimeout=2000
+      ConnectionStrings__DefaultConnection: Data Source=/data/crechecad.db;Default Timeout=30
     volumes:
       - school-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+  worker:
+    build:
+      context: .
+      dockerfile: src/creche_cad.Worker/Dockerfile
+    environment:
+      DataDirectory: /data
+      ConnectionStrings__DefaultConnection: Data Source=/data/crechecad.db;Default Timeout=30
+      ConnectionStrings__Redis: redis:6379,abortConnect=false,connectTimeout=2000
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Username: ${RABBITMQ_USER:-crechecad}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-crechecad-local-only}
+    volumes:
+      - school-data:/data
+    depends_on:
+      api:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
   web:
     build: frontend

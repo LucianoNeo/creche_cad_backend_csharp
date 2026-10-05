@@ -3,10 +3,16 @@
 ```mermaid
 flowchart LR
  Browser[Vue 3 / Nuxt 4] --> Nginx[Nginx :8082]
- Nginx --> API[ASP.NET Core / .NET 10]
- API --> DB[(SQLite / school-data)]
+ Nginx --> API[API / ASP.NET Core .NET 10]
+ API --> Service[Service / Mediator / validação]
+ Service --> Data[Data / EF Core]
+ Data --> DB[(SQLite / school-data)]
  API --> Access[Cookie HttpOnly / CSRF / perfis]
  DB --> Audit[Histórico de alterações]
+ DB --> Outbox[Outbox / somente tipo de evento]
+ Outbox --> Worker[Worker .NET]
+ Worker --> Rabbit[RabbitMQ]
+ Rabbit --> Cache[Redis / invalidação do resumo]
  API --> Backup[Snapshot para download]
 ```
 
@@ -16,9 +22,15 @@ flowchart LR
 - `src/creche_cad.Api`: controllers, acesso, bootstrap e dados fictícios.
 - `src/creche_cad.Domain`: entidades, entradas e DTOs.
 - `src/creche_cad.Data`: contexto, mapeamentos e migrations.
-- `tests/`: verificações contra os containers completos.
+- `src/creche_cad.Service`: consultas e comandos CQRS, Mediator, pipeline de validação e regras FluentValidation.
+- `src/creche_cad.Worker`: publicação do outbox e consumidor de invalidação do resumo.
+- `tests/`: testes dos validadores e verificações da aplicação em Compose.
 
-Os controllers usam o DbContext diretamente. As consultas são assíncronas e a listagem de alunos projeta o nome da turma junto ao registro. O histórico é incluído no mesmo SaveChanges que altera os dados.
+O resumo do Dashboard passa pela API, por uma consulta Mediator e por um leitor em Data. Redis guarda contagens e nomes das turmas por dois minutos; cada alteração escolar também grava um evento pequeno no mesmo SaveChanges dos dados e do histórico. O worker envia esse evento pelo RabbitMQ e remove as duas variantes da chave do resumo. O payload não contém nome, documento ou identificador de aluno.
+
+FluentValidation verifica os modelos de aluno, turma e professor antes das ações MVC; regras de data, campos obrigatórios e limites de texto ficam nos validadores do projeto Service. As migrations são aplicadas pela API na inicialização e incluem a tabela do outbox.
+
+A listagem de alunos continua assíncrona e projeta o nome da turma junto ao registro. O histórico é incluído no mesmo SaveChanges que altera os dados.
 
 ## Sessão
 
@@ -52,7 +64,7 @@ Listas aceitam `page`, `pageSize` e `q` e devolvem `{items,total}`. O tamanho m�
 
 ## Esquema e arquivos
 
-As migrations de 2024 são preservadas. A migration CompleteSchoolAccess atualiza relacionamentos e adiciona usuários, solicitações e auditoria; o snapshot foi atualizado para EF Core 10. O CI constrói a mesma sequência de migrations entregue no repositório.
+As migrations de 2024 são preservadas. `CompleteSchoolAccess` atualiza relacionamentos e adiciona usuários, solicitações e auditoria; a migration `AddSchoolChangeOutbox` registra alterações escolares para o worker. O snapshot está atualizado para EF Core 10 e toda a sequência continua versionada no Data.
 
 Documentos são vinculados a um aluno ou professor existente, sem caminhos recebidos do navegador. O servidor valida extensão, assinatura e limites. O snapshot inclui cadastros, usuários, histórico e documentos. Somente Administrador pode baixá-lo.
 

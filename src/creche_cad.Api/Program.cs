@@ -1,6 +1,9 @@
 using creche_cad.Data.Context;
+using creche_cad.Data;
 using creche_cad.Api.Security;
 using creche_cad.Api.Services;
+using creche_cad.Service;
+using creche_cad.Service.Dashboard;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -19,6 +22,13 @@ builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(P
 builder.Services.AddDbContext<CrecheDbContext>(options => options
     .UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? $"Data Source={Path.Combine(dataDirectory, "crechecad.db")}")
 );
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379,abortConnect=false,connectTimeout=2000";
+    options.InstanceName = "crechecad:";
+});
+builder.Services.AddSchoolService();
+builder.Services.AddScoped<IDashboardSummaryReader, DashboardSummaryReader>();
 builder.Services.AddScoped<PasswordHasher<SchoolUser>>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options => {
     options.Cookie.Name = "crechecad.session";
@@ -42,6 +52,7 @@ builder.Services.AddControllersWithViews(options => {
     options.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
     options.Filters.Add(new StaffWriteFilter());
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    options.Filters.Add<FluentValidationActionFilter>();
 });
 builder.Services.AddProblemDetails();
 builder.Services.AddRateLimiter(options => {

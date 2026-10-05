@@ -3,6 +3,6 @@
     public class DocumentoDto
     {
         public Guid Id { get; set; }
-        public string NomeArquivo { get; set; }
+        public string NomeArquivo { get; set; } = "";
     }
 }
